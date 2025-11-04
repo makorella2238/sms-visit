@@ -1,0 +1,65 @@
+/* Глобальный reset для всех интерактивных элементов */
+button,
+input,
+textarea,
+select {
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: none;
+    font: inherit;           /* чтобы шрифт всегда совпадал с текстом */
+    color: inherit;
+    box-sizing: border-box;
+}
+
+/* Убираем синюю обводку Chrome */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+}
+
+/* Убираем очистку внутри input у chrome */
+input::-ms-clear,
+input::-ms-reveal {
+    display: none;
+}
+input::-webkit-search-decoration,
+input::-webkit-search-cancel-button,
+input::-webkit-search-results-button,
+input::-webkit-search-results-decoration {
+    display: none;
+}
+
+/* Убираем стрелочки у input type=number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Кнопки делаем кликабельными, но без браузерной стилизации */
+button {
+    cursor: pointer;
+}
+
+/* Обнуление checkbox / радио (если будем кастомить) */
+input[type="checkbox"],
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    margin: 0;
+}
+
+
+body {
+    font-family: 'Manrope', sans-serif;
+    background-color: rgba(96, 154, 194, 0.35);
+    color: #333;
+}

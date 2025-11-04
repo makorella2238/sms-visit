@@ -1,0 +1,412 @@
+:root{
+    --blue:#006999;
+    --muted-border:#dcdcdc;
+    --card-bg:#eef6fa; /* серовато-голубой */
+    --tag-bg:#e6f5fb;
+    --text:#222;
+}
+
+/* Overlay: затемнение главной страницы */
+.sms-modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4); /* opacity: 0.4 */
+    display: flex;
+    justify-content: flex-end; /* модалка справа */
+    z-index: 1000;
+    font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* Контейнер модалки */
+.sms-modal-container{
+    width: 550px;
+    height: 100vh;
+    background: #fff;
+    padding: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Header */
+.sms-modal-header{
+    display:flex;
+    gap:16px;
+    align-items:center;
+}
+.sms-modal-back-btn{
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+.sms-modal-title-block{
+    display:flex;
+    flex-direction:column;
+}
+.sms-modal-title{
+    font-size:18px;
+    color:var(--blue);
+    font-weight:600;
+}
+.sms-modal-subtitle{
+    font-size:14px;
+    color:var(--text);
+    margin-top:4px;
+}
+
+/* divider */
+.sms-modal-divider{
+    width:100%;
+    height:1px;
+    background:var(--muted-border);
+    margin:16px 0;
+}
+
+/* section common */
+.sms-section{
+    margin-bottom:18px;
+}
+
+.sms-block {
+    background:var(--card-bg);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.sms-section-title{
+    font-weight:600;
+    margin-bottom:8px;
+    color:#222;
+}
+.sms-section-sub{
+    font-size:13px;
+    color:#444;
+    margin-bottom:10px;
+}
+
+/* select full width */
+.sms-select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #d9d9d9;
+    border-radius:6px;
+    background:#fff;
+    font-size:14px;
+    outline:none;
+    box-sizing:border-box;
+    margin-bottom:12px;
+    appearance: none; /* убираем дефолтную стрелку */
+    background-image: url("/arr_down.svg"); /* твоя стрелка */
+    background-repeat: no-repeat;
+    background-position: right 12px center; /* ближе к центру */
+}
+
+/* tags row (ovals) */
+.sms-tags-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.sms-tag{
+    background:var(--tag-bg);
+    color:var(--blue);
+    padding:6px 10px;
+    border-radius:20px;
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+}
+
+/* grey-blue card (textarea block) */
+.sms-card{
+    background:var(--card-bg);
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:16px;
+}
+.sms-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.sms-card-title{
+    font-weight:700;
+}
+.sms-card-help{
+    width:20px;
+    height:20px;
+    /* placeholder for question icon (you will insert img) */
+}
+.sms-card-sub{
+    margin-top:8px;
+    margin-bottom:8px;
+    color:#333;
+    font-size:13px;
+}
+
+/* textarea */
+.sms-textarea{
+    width:100%;
+    min-height:72px;
+    max-height:160px;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #fff;
+    box-sizing:border-box;
+    resize:vertical;
+    background:#fff;
+    font-family:inherit;
+    font-size:14px;
+}
+
+/* stats row */
+.sms-stats{
+    display:flex;
+    gap:15px;
+    margin-top:12px;
+    font-size:13px;
+    color:#333;
+}
+
+.sms-accent {
+    color: #006999;
+    font-weight: 600; /* можно убрать если не нужно */
+}
+
+
+/* where-to-send row (3 items spaced) */
+.sms-where-row{
+    margin-top: 12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+}
+.sms-where-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+}
+.sms-round-checkbox {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #006999;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.sms-round-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #006999;
+    transform: translate(-50%, -50%);
+}
+
+.sms-where-text{
+    font-size:14px;
+}
+
+/* place for help icon to remain centered (for the first item) */
+.sms-help-icon{
+    margin-left:auto;
+    width:18px;
+    height:18px;
+    display:inline-block;
+}
+
+/* account row: title left, select right inline */
+.account-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-top: 16px;
+}
+.sms-section-title-inline{
+    font-weight:500;
+    font-size: 14px;
+    white-space: nowrap;
+    display: inline;
+}
+
+.sms-account-select{
+    width: 340px; /* было 270 — расширяем */
+    padding: 6px 36px 6px 12px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    font-size: 14px;
+    appearance: none; /* убираем дефолтную стрелку */
+    background-image: url("/arr_down.svg"); /* твоя стрелка */
+    background-repeat: no-repeat;
+    background-position: right 12px center; /* ближе к центру */
+}
+
+
+/* full width input (daily limit) */
+.sms-full-input{
+    width:100%;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #d9d9d9;
+    margin-top:10px;
+    box-sizing:border-box;
+}
+
+/* footer button with margin-top: 80px from previous content — we'll wrap in container to ensure spacing */
+.sms-footer{
+    margin-top:80px;
+    display:flex;
+    justify-content:flex-start;
+}
+.sms-add-button{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    padding:10px 24px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+/* repeat send row for apology */
+.sms-repeat-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+}
+.sms-repeat-text{
+    width:60%;
+    font-size:14px;
+}
+
+.sms-min-text{
+    font-size:14px;
+}
+
+/* responsive tweaks */
+@media (max-width:600px){
+    .sms-modal-container{ width:100%; }
+}
+
+.sms-error-text {
+    color: #d63031;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+.sms-input-error {
+    border-color: #d63031 !important;
+    background-color: #ffe6e6;
+}
+
+/* Стили для radio кнопок вместо checkbox */
+.sms-round-radio {
+    margin-right: 8px;
+}
+
+.sms-where-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.sms-round-radio {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #00AFFF;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+/* Когда выбрано */
+.sms-round-radio:checked {
+    border-color: #00AFFF;
+}
+
+/* Внутренняя точка при выборе */
+.sms-round-radio:checked::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 8px;
+    height: 8px;
+    background: #00AFFF;
+    border-radius: 50%;
+}
+.sms-repeat-inputs {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.number-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 80px;
+}
+
+.sms-number-input {
+    width: 100%;
+    padding: 8px 0px 8px 16px; /* справа место под стрелки */
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+.custom-arrows {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.custom-arrows button {
+    width: 10px;
+    height: 6px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* вставляешь свои картинки стрелочек */
+.custom-arrows .arrow-up {
+    background: url("/arrow-up.svg") no-repeat center center;
+    background-size: contain;
+}
+
+.custom-arrows .arrow-down {
+    background: url("/arrow-down.svg") no-repeat center center;
+    background-size: contain;
+}
+
+/* Ошибка */
+.sms-input-error {
+    border-color: #d63031;
+    background-color: #ffe6e6;
+}

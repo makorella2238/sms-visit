@@ -1,0 +1,433 @@
+/* Основные стили */
+.sms-statistics {
+    padding: 24px;
+}
+
+
+/* Блок фильтров */
+.filters-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow:
+            0 10px 30px rgba(0, 0, 0, 0.1),
+            0 1px 8px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filters-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.filter-item {
+    display: flex;
+    position: relative;
+}
+
+/* Стили для поиска */
+.search-wrapper {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-wrapper:focus-within {
+    transform: translateY(-2px);
+}
+
+.search-input {
+    width: 100%;
+    padding: 14px 48px 14px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    font-size: 14px;
+    background: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow:
+            0 4px 20px rgba(102, 126, 234, 0.15),
+            0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
+    transition: color 0.3s ease;
+}
+
+.search-input:focus::placeholder {
+    color: #6b7280;
+}
+
+.search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.search-wrapper:focus-within .search-icon {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Стили для селектов */
+.filter-select {
+    width: 100%;
+    padding: 14px 42px 14px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.filter-select:hover {
+    border-color: #c7d2fe;
+    transform: translateY(-1px);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow:
+            0 4px 20px rgba(102, 126, 234, 0.15),
+            0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Информационная строка */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-left {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    font-size: 14px;
+    color: #4b5563;
+    text-transform: lowercase;
+    transition: color 0.3s ease;
+}
+
+.info-item:hover {
+    color: #374151;
+}
+
+.info-item strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* Кнопка скачивания */
+.download-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow:
+            0 4px 15px rgba(102, 126, 234, 0.3),
+            0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.download-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow:
+            0 8px 25px rgba(102, 126, 234, 0.4),
+            0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.download-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.download-btn.downloading {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    cursor: not-allowed;
+}
+
+.download-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    animation: progressBar 1s ease-in-out infinite;
+}
+
+@keyframes progressBar {
+    0% { width: 0%; }
+    50% { width: 50%; }
+    100% { width: 100%; }
+}
+
+.download-btn img {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s ease;
+}
+
+.download-btn:hover:not(:disabled) img {
+    transform: translateY(-1px);
+}
+
+/* Таблица */
+.table-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow:
+            0 10px 30px rgba(0, 0, 0, 0.1),
+            0 1px 8px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.6s ease-out 0.1s both;
+}
+
+.sms-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.sms-table th,
+.sms-table td {
+    padding: 16px 12px;       /* одинаковый паддинг у всех ячеек */
+    vertical-align: middle;    /* выравнивание по центру */
+    box-sizing: border-box;    /* чтобы padding учитывался в общей ширине */
+}
+
+.sms-table th {
+    padding: 12px 6px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    text-transform: lowercase;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.sms-table th:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+
+
+.sms-table th.sortable {
+    justify-content: space-between;
+    align-items: center;       /* по центру вертикально */
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    padding: 20px 12px;        /* совпадает с td */
+}
+
+.sms-table th.sortable span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sort-icon {
+    width: 16px;
+    height: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.6;
+    flex-shrink: 0; /* чтобы иконка не сжималась */
+}
+
+
+.sms-table th.sortable:hover {
+    color: #667eea;
+}
+
+.sort-icon {
+    width: 16px;
+    height: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.6;
+}
+
+.sort-icon.asc {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+
+.sort-icon.desc {
+    opacity: 1;
+}
+
+.sms-table th.sortable:hover .sort-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.sms-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #4b5563;
+    transition: all 0.3s ease;
+}
+
+.sms-table tr {
+    transition: all 0.3s ease;
+}
+
+.sms-table tr.even {
+    background-color: #fafafa;
+}
+
+.sms-table tr.odd {
+    background-color: white;
+}
+
+.sms-table tr:hover {
+    background-color: #f8fafc;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.sms-table tr:hover td {
+    color: #374151;
+}
+
+.message-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6b7280;
+}
+
+/* Стили статусов */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: lowercase;
+    transition: all 0.3s ease;
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .filters-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .info-left {
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sms-statistics {
+        padding: 16px;
+    }
+
+    .filters-row {
+        grid-template-columns: 1fr;
+    }
+
+    .info-row {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .info-left {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .table-section {
+        padding: 16px;
+        overflow-x: auto;
+    }
+}
+
+/* Анимация появления строк таблицы */
+.sms-table tbody tr {
+    animation: rowAppear 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.sms-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+.sms-table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+.sms-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+.sms-table tbody tr:nth-child(4) { animation-delay: 0.4s; }
+.sms-table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes rowAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sms-table td:first-child,
+.sms-table th:first-child {
+    width: 160px; /* можно менять */
+    min-width: 160px;
+}
+

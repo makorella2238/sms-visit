@@ -1,0 +1,7 @@
+.app {
+    margin-left: 120px;
+    margin-top: 20px;
+    max-width: 1620px;
+    padding: 0 15px; /* Добавляем отступы по бокам для мобильных устройств */
+    box-sizing: border-box;
+}
