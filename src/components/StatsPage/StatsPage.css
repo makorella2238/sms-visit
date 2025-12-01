@@ -203,7 +203,7 @@
     transform: translateY(-1px);
 }
 
-/* Таблица */
+/* Таблица - ВАЖНЫЕ ИСПРАВЛЕНИЯ */
 .table-section {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 8px;
@@ -212,12 +212,15 @@
             0 1px 8px rgba(0, 0, 0, 0.05);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow-x: auto; /* Добавить горизонтальный скролл */
 }
 
 .sms-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate; /* Изменить collapse на separate */
+    border-spacing: 0; /* Убрать отступы между ячейками */
     font-size: 13px;
+    font-weight: 500;
     color: #475569;
 }
 
@@ -237,17 +240,45 @@
     vertical-align: middle;
     box-sizing: border-box;
 }
+.sms-table td,
+.sms-table th {
+    height: auto;          /* автоматическая высота */
+    max-height: 40px;      /* ограничение по высоте */
+    line-height: 20px;     /* вертикальное центрирование однострочного текста */
+    overflow: hidden;      /* скрываем лишний текст */
+    text-overflow: ellipsis;
+    white-space: nowrap;   /* предотвращаем перенос строки */
+    vertical-align: middle;
+    padding: 0 12px;        /* можно подстроить под дизайн */
+    box-sizing: border-box;
+}
+
+.sms-table th {
+    padding: 8px 0;
+}
+
+.sms-table {
+    width: 100%;
+    border-collapse: collapse; /* важно для корректного отображения границ */
+}
 
 .sms-table th {
     font-size: 13px;
     font-weight: 600;
     color: #64748B;
-    border-bottom: 2px solid #e5e7eb;
     text-transform: lowercase;
+    text-align: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #CBD5E1; /* нижняя граница шапки */
     position: relative;
     transition: all 0.3s ease;
-    text-align: center;
 }
+
+/* Убираем старую границу у tr */
+.sms-table thead tr {
+    border-bottom: none;
+}
+
 
 .sms-table th:hover {
     background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
@@ -302,8 +333,8 @@
     visibility: visible; /* Показываем при ховере даже если неактивно */
 }
 
+
 .sms-table td {
-    color: #4b5563;
     transition: all 0.3s ease;
 }
 
@@ -312,7 +343,7 @@
 }
 
 .sms-table tr.even {
-    background-color: #fafafa;
+    background-color: #ffffff;
 }
 
 .sms-table tr.odd {
@@ -339,14 +370,14 @@
     transition: all 0.3s ease;
 }
 
-/* Адаптивность */
 @media (max-width: 1200px) {
     .filters-row {
-        grid-template-columns: 1fr 1fr;
+        flex-wrap: wrap;
     }
 
-    .info-left {
-        gap: 20px;
+    .filter-item {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 180px;
     }
 }
 
@@ -499,44 +530,25 @@
 
 /* Центрирование ячейки с телефоном и стрелкой */
 .small-cell.flex-td {
+    width: 200px;
+    position: relative;
     display: flex;
+    align-items: center;
     gap: 8px; /* Расстояние между телефоном и стрелкой */
     padding: 12px;
 }
 
-/* ЖЁСТКАЯ фиксированная высота строк */
-.sms-table tr {
-    height: 40px !important;
-    max-height: 40px !important;
+.text-flex-center {
+    margin: 0 auto; /* авто отступы слева и справа */
+}
+.arr-right {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    height: 16px;
+    width: 16px;
 }
 
-/* Жёсткая высота ячеек */
-.sms-table td,
-.sms-table th {
-    height: 40px !important;
-    max-height: 40px !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    vertical-align: middle !important;
-    overflow: hidden !important;
-}
-
-/* Любой контент внутри ячеек не должен раздвигать строку */
-.sms-table td * {
-    max-height: 40px !important;
-    overflow: hidden !important;
-    display: block;
-}
-
-/* Для flex-ячеек — прижать по центру */
-.sms-table td.flex-td,
-.sms-table td > div {
-    display: flex !important;
-    align-items: center !important;
-    height: 40px !important;
-    max-height: 40px !important;
-    overflow: hidden !important;
-}
 
 .ad-block.clickable {
     cursor: pointer;

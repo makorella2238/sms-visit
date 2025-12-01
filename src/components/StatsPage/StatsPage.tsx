@@ -79,10 +79,8 @@ export const StatsPage: React.FC = () => {
         }
     }, [data]);
 
-    // Функция для преобразования данных API в формат таблицы
-    const transformApiDataToTableFormat = (apiData: ApiSmsData[]): {
-
-    }[] => {
+// В функции transformApiDataToTableFormat изменим возвращаемый объект:
+    const transformApiDataToTableFormat = (apiData: ApiSmsData[]): TableRow[] => {
         if (!apiData || !Array.isArray(apiData)) return [];
 
         return apiData.map((item) => ({
@@ -90,6 +88,9 @@ export const StatsPage: React.FC = () => {
             date: formatDate(item.created_at),
             fio: item.full_name || 'Не указано',
             account: item.account || 'Не указано',
+            adTitle: item.title || '—',
+            adPrice: item.price ? `${item.price} ₽` : 'цена не указана',
+            adUrl: item.url || '#',
             buyerPhone: formatPhone(item.buyer_phone),
             sellerPhone: formatPhone(item.avito_phone),
             smsType: getSmsTypeText(item.sms_type),
@@ -97,15 +98,8 @@ export const StatsPage: React.FC = () => {
             sent: getSentType(item.meth_sms, item.meth_max),
             status: item.status || 'неизвестно',
             cost: item.cost !== undefined ? `${item.cost.toFixed(2)} ₽` : '-',
-
-            // 🔥 новые поля
-            adTitle: item.title || '—',
-            adPrice: item.price ? `${item.price} ₽` : 'цена не указана',
-            adUrl: item.url || '#',
-
             originalData: item
         }));
-
     };
 
     // Вспомогательные функции для преобразования данных
@@ -470,8 +464,8 @@ export const StatsPage: React.FC = () => {
                                 </td>
 
                                 <td className="small-cell flex-td">
-                                    <span>{row.buyerPhone}</span>
-                                    <img src="/arr-right.svg" alt="arr-right.svg"/>
+                                    <span className='text-flex-center'>{row.buyerPhone}</span>
+                                    <img className='arr-right' src="/arr-right.svg" alt="arr-right.svg"/>
                                 </td>
                                 <td className="small-cell">{row.sellerPhone}</td>
                                 <td className="small-cell">{row.smsType}</td>
