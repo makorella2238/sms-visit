@@ -366,8 +366,34 @@ export function SmsModal({
 
         const normalizedPhone = selectedTags[0].replace(/^\+/, "");
 
+        console.log("=== DEBUG name_id ===");
+        console.log("selectedTags:", selectedTags);
+        console.log("selectedTags[0]:", selectedTags[0]);
+        console.log("accountsPhones:", accountsPhones);
+        console.log(
+            "all numbers in groups:",
+            accountsPhones.flatMap(g => g.numbers)
+        );
+
+
+        const selectedPhone = selectedTags[0];
+
+        const selectedGroup = accountsPhones.find(group => {
+            const result = group.numbers.includes(selectedPhone);
+            console.log(
+                `Checking group "${group.name}" numbers=${JSON.stringify(group.numbers)} ` +
+                `against phone=${selectedPhone} => ${result}`
+            );
+            return result;
+        });
+
+        console.log("selectedGroup result:", selectedGroup);
+
+
+        const nameId = selectedGroup?.name || null;
+
         const body: any = {
-            name_id: "test_user",
+            name_id: nameId,
             sms_type,
             avito_phone: normalizedPhone,
             is_active: editData?.is_active,
@@ -381,6 +407,7 @@ export function SmsModal({
             limit_ost: parsedLimit,
             wait_durat: data.wait_durat
         };
+
 
         if (meth_sms) {
             body.sms_text = data.message;
@@ -462,6 +489,8 @@ export function SmsModal({
             }
 
             let response: Response;
+
+            console.log('body', body)
 
             if (editData) {
                 const updateUrl = new URL("https://smscard.b2b-help.ru/api/sms-cards/update");
