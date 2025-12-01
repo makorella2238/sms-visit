@@ -1,24 +1,48 @@
-:root{
-    --blue:#006999;
-    --muted-border:#dcdcdc;
-    --card-bg:#eef6fa; /* серовато-голубой */
-    --tag-bg:#e6f5fb;
-    --text:#222;
+:root {
+    --blue: #006999;
+    --muted-border: #dcdcdc;
+    --card-bg: #e6f0f5; /* серовато-голубой */
+    --tag-bg: #e6f5fb;
+    --text: #475569;
 }
 
 /* Overlay: затемнение главной страницы */
-.sms-modal-overlay{
+.sms-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4); /* opacity: 0.4 */
+    background: rgba(0, 0, 0, 0.4); /* opacity: 0.4 */
     display: flex;
     justify-content: flex-end; /* модалка справа */
-    z-index: 1000;
+    z-index: 100;
     font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
-/* Контейнер модалки */
-.sms-modal-container{
+.close-button {
+    position: absolute;
+    top: 25px;
+    right: 550px; /* ширина модалки */
+    width: 32px;
+    height: 32px;
+    background-color: #006999;
+    border-radius: 8px 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.close-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.close-button:hover {
+    background-color: #005580;
+}
+
+.sms-modal-container {
+    position: relative;
     width: 550px;
     height: 100vh;
     background: #fff;
@@ -26,150 +50,210 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow-y: auto;      /* можно */
+    overflow-x: visible;   /* важно! */
 }
 
+
 /* Header */
-.sms-modal-header{
-    display:flex;
-    gap:16px;
-    align-items:center;
+.sms-modal-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
 }
-.sms-modal-back-btn{
-    width:32px;
-    height:32px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
+
+.sms-modal-back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
-.sms-modal-title-block{
-    display:flex;
-    flex-direction:column;
+
+.sms-modal-title-block {
+    display: flex;
+    flex-direction: column;
 }
-.sms-modal-title{
-    font-size:18px;
-    color:var(--blue);
-    font-weight:600;
+
+.sms-modal-title {
+    font-size: 18px;
+    color: var(--blue);
+    font-weight: 600;
 }
-.sms-modal-subtitle{
-    font-size:14px;
-    color:var(--text);
-    margin-top:4px;
+
+.sms-modal-subtitle {
+    font-size: 14px;
+    color: var(--text);
+    margin-top: 4px;
 }
 
 /* divider */
-.sms-modal-divider{
-    width:100%;
-    height:1px;
-    background:var(--muted-border);
-    margin:16px 0;
+.sms-modal-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--muted-border);
+    margin: 16px 0;
+}
+
+.sms-section-select {
+    margin-bottom: 18px;
 }
 
 /* section common */
-.sms-section{
-    margin-bottom:18px;
+.sms-section {
+    margin-bottom: 24px;
 }
 
 .sms-block {
-    background:var(--card-bg);
+    background: var(--card-bg);
     padding: 12px;
     border-radius: 8px;
 }
 
-.sms-section-title{
-    font-weight:600;
-    margin-bottom:8px;
-    color:#222;
-}
-.sms-section-sub{
-    font-size:13px;
-    color:#444;
-    margin-bottom:10px;
+.sms-section-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #475569;
 }
 
-/* select full width */
-.sms-select{
-    width:100%;
-    padding:10px 12px;
-    border:1px solid #d9d9d9;
-    border-radius:6px;
-    background:#fff;
-    font-size:14px;
-    outline:none;
-    box-sizing:border-box;
-    margin-bottom:12px;
-    appearance: none; /* убираем дефолтную стрелку */
-    background-image: url("/arr_down.svg"); /* твоя стрелка */
-    background-repeat: no-repeat;
-    background-position: right 12px center; /* ближе к центру */
+.sms-section-sub {
+    font-size: 14px;
+    color: #475569;
 }
+
+.sms-select {
+    margin-top: 10px;
+    padding: 10px 36px 10px 16px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+
+    /* теперь это работает, потому что div */
+    background-image: url("/arr_down.svg");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sms-select.has-tags {
+    margin-bottom: 12px;
+}
+
+    /* При фокусе/открытом виджете */
+.sms-select :focus {
+    border-color: #CBD5E1;
+    background-image: url("/arrow-up.svg"); /* стрелка вверх */
+}
+
+
+
+.sms-select,
+.sms-account-select {
+    color: #64748B !important;
+}
+
+
+.numbers-dropdown {
+    border: 1px solid #94A3BB;
+    border-radius: 8px;
+    background-color: #fff;
+    margin-top: 4px;
+    padding: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
 
 /* tags row (ovals) */
-.sms-tags-row{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
+.sms-tags-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
-.sms-tag{
-    background:var(--tag-bg);
-    color:var(--blue);
-    padding:6px 10px;
-    border-radius:20px;
-    font-size:13px;
-    cursor:pointer;
-    user-select:none;
+
+.sms-tag {
+    background: #e6f0f5;
+    color: #004666;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
 }
 
 /* grey-blue card (textarea block) */
-.sms-card{
-    background:var(--card-bg);
-    padding:12px;
-    border-radius:8px;
-    margin-bottom:16px;
+.sms-card {
+    background: var(--card-bg);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
 }
-.sms-card-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+
+.sms-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.sms-card-title{
-    font-weight:700;
+
+.sms-card-title {
+    font-weight: 700;
 }
-.sms-card-help{
-    width:20px;
-    height:20px;
+
+.sms-card-help {
+    width: 20px;
+    height: 20px;
     /* placeholder for question icon (you will insert img) */
 }
-.sms-card-sub{
-    margin-top:8px;
-    margin-bottom:8px;
-    color:#333;
-    font-size:13px;
+
+.sms-card-sub {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 13px;
 }
 
 /* textarea */
-.sms-textarea{
-    width:100%;
-    min-height:72px;
-    max-height:160px;
-    padding:10px;
-    border-radius:6px;
-    border:1px solid #fff;
-    box-sizing:border-box;
-    resize:vertical;
-    background:#fff;
-    font-family:inherit;
-    font-size:14px;
+.sms-textarea {
+    width: 100%;
+    min-height: 72px;
+    max-height: 160px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #fff;
+    box-sizing: border-box;
+    resize: vertical;
+    background: #fff;
+    font-family: inherit;
+    color: #64748B;
+    font-size: 14px;
 }
 
 /* stats row */
-.sms-stats{
-    display:flex;
-    gap:15px;
-    margin-top:12px;
-    font-size:13px;
-    color:#333;
+.sms-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 4px;
+    font-size: 13px;
+    color: #333;
+}
+
+.sms-textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important; /* или нужный цвет */
+}
+
+input {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .sms-accent {
@@ -179,24 +263,25 @@
 
 
 /* where-to-send row (3 items spaced) */
-.sms-where-row{
+.sms-where-row {
     margin-top: 12px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
-.sms-where-item{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    cursor:pointer;
+
+.sms-where-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
 }
+
 .sms-round-checkbox {
     appearance: none;
     width: 18px;
     height: 18px;
-    border: 2px solid #006999;
     border-radius: 50%;
     position: relative;
     cursor: pointer;
@@ -215,33 +300,34 @@
     transform: translate(-50%, -50%);
 }
 
-.sms-where-text{
-    font-size:14px;
+.sms-where-text {
+    font-size: 14px;
 }
 
 /* place for help icon to remain centered (for the first item) */
-.sms-help-icon{
-    margin-left:auto;
-    width:18px;
-    height:18px;
-    display:inline-block;
+.sms-help-icon {
+    margin-left: auto;
+    width: 18px;
+    height: 18px;
+    display: inline-block;
 }
 
 /* account row: title left, select right inline */
-.account-row{
-    display:flex;
-    align-items:center;
-    gap:18px;
+.account-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
     margin-top: 16px;
 }
-.sms-section-title-inline{
-    font-weight:500;
+
+.sms-section-title-inline {
+    font-weight: 500;
     font-size: 14px;
     white-space: nowrap;
     display: inline;
 }
 
-.sms-account-select{
+.sms-account-select {
     width: 340px; /* было 270 — расширяем */
     padding: 6px 36px 6px 12px;
     border-radius: 6px;
@@ -256,50 +342,60 @@
 
 
 /* full width input (daily limit) */
-.sms-full-input{
-    width:100%;
-    padding:10px;
-    border-radius:6px;
-    border:1px solid #d9d9d9;
-    margin-top:10px;
-    box-sizing:border-box;
+.sms-full-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    margin-top: 10px;
+    box-sizing: border-box;
 }
 
-/* footer button with margin-top: 80px from previous content — we'll wrap in container to ensure spacing */
-.sms-footer{
-    margin-top:80px;
-    display:flex;
-    justify-content:flex-start;
+.sms-full-input::placeholder {
+    color: #475569;
+    font-size: 14px !important;
 }
-.sms-add-button{
-    background:var(--blue);
-    color:#fff;
-    border:none;
-    padding:10px 24px;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:600;
+
+
+/* footer button with margin-top: 80px from previous content — we'll wrap in container to ensure spacing */
+.sms-footer {
+    margin-top: 80px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.sms-add-button {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 /* repeat send row for apology */
-.sms-repeat-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-}
-.sms-repeat-text{
-    width:60%;
-    font-size:14px;
+.sms-repeat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
 }
 
-.sms-min-text{
-    font-size:14px;
+.sms-repeat-text {
+    width: 60%;
+    font-size: 14px;
+}
+
+.sms-min-text {
+    font-size: 14px;
 }
 
 /* responsive tweaks */
-@media (max-width:600px){
-    .sms-modal-container{ width:100%; }
+@media (max-width: 600px) {
+    .sms-modal-container {
+        width: 100%;
+    }
 }
 
 .sms-error-text {
@@ -325,41 +421,61 @@
     cursor: pointer;
 }
 
+/* Стили для radio кнопок */
 .sms-round-radio {
-    appearance: none;
-    -webkit-appearance: none;
     width: 16px;
     height: 16px;
-    border: 2px solid #00AFFF;
     border-radius: 50%;
+    background: white;
     display: inline-block;
     position: relative;
     margin-right: 8px;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-/* Когда выбрано */
+/* Когда выбрано - активное состояние */
 .sms-round-radio:checked {
+    border: 4px solid #00AFFF;
+    background: white;
+}
+
+/* Убираем стандартное поведение для фокуса */
+.sms-round-radio:hover {
     border-color: #00AFFF;
 }
 
-/* Внутренняя точка при выборе */
-.sms-round-radio:checked::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 8px;
-    height: 8px;
-    background: #00AFFF;
-    border-radius: 50%;
+.sms-round-radio:focus {
+    outline: none;
 }
+
+
+/* Ховер состояние */
+
+.sms-where-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.sms-where-text {
+    font-size: 14px;
+    color: #475569;
+}
+
+.sms-help-icon {
+    margin-left: 8px;
+}
+
+
 .sms-repeat-inputs {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
 }
+
 .number-wrapper {
     position: relative;
     display: inline-block;
@@ -374,6 +490,7 @@
     box-sizing: border-box;
     font-size: 14px;
 }
+
 
 .custom-arrows {
     position: absolute;
@@ -405,8 +522,475 @@
     background-size: contain;
 }
 
+.sms-card-title-img {
+    cursor: pointer;
+}
+
+.sms-tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.sms-tooltip-wrapperRadio {
+    margin-top: 2px;
+    position: relative;
+    display: inline-block;
+}
+
+.sms-card-title-img {
+    cursor: pointer;
+}
+
+.sms-tooltip {
+    position: absolute;
+    top: 30px; /* чуть ниже иконки */
+    right: -10px;
+    background-color: #004666;
+    color: #fff !important;
+    padding: 12px;
+    border-radius: 8px;
+    width: 400px;
+    z-index: 10;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.sms-tooltipRadio {
+    position: absolute;
+    top: 30px; /* чуть ниже иконки */
+    right: -308px;
+    background-color: #004666;
+    color: #fff !important;
+    padding: 12px;
+    border-radius: 8px;
+    width: 400px;
+    z-index: 10;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sms-tooltip-triangle {
+    position: absolute;
+    top: -9px;
+    right: 10px;
+    width: 16px;
+    height: 10px;
+}
+
+.sms-tooltip-triangleRadio {
+    position: absolute;
+    top: -9px;
+    right: 379px;
+    width: 16px;
+    height: 10px;
+}
+
+.sms-tooltip-text {
+    color: #ffffff; /* белый текст */
+    margin-top: 0; /* чтобы текст не перекрывал треугольник */
+}
+
+
 /* Ошибка */
 .sms-input-error {
     border-color: #d63031;
     background-color: #ffe6e6;
+}
+
+.account-block {
+    background: #F4F6FA;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+.account-header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.acc-name {
+    color: #475569;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.acc-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #111;
+}
+
+.acc-right.disabled {
+    color: #94A3BB; /* серый если номеров нет */
+}
+
+.numbers-list {
+    margin-top: 8px;
+    padding-left: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Затемнение фона */
+.numbers-popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    animation: fadeIn 0.25s ease;
+}
+
+/* Плавное появление */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Контейнер */
+.numbers-popup-inner {
+    background: #ffffff;
+    width: 420px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    animation: popupScale 0.25s ease;
+}
+
+/* Анимация */
+@keyframes popupScale {
+    from {
+        transform: scale(0.92);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.popup-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* Чекбокс "Все номера" */
+.all-numbers-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0 10px 5px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+/* Блок аккаунта */
+.account-block {
+    background: #f1f5f9;
+    border-radius: 5px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    transition: background 0.25s ease;
+}
+
+.account-block:hover {
+    background: #EEF3F8;
+}
+
+/* Заголовок аккаунта */
+.account-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.acc-name {
+    color: #475569;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.acc-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #1E293B;
+}
+
+.acc-count {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.acc-count.open {
+    color: #64748B;
+}
+
+.acc-count.closed {
+    color: #94A3BB;
+}
+
+
+.acc-arrow-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.75;
+    transition: transform 0.25s ease;
+}
+
+.account-header.open .acc-arrow-icon {
+    transform: rotate(180deg);
+}
+
+/* Список номеров */
+.numbers-list {
+    margin-top: 8px;
+    padding-left: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.number-row input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background-color: #fff; /* фон по умолчанию */
+    border: 1px solid #94A3BB; /* ← добавляем серую границу для невыбранного состояния */
+    position: relative;
+    cursor: pointer;
+}
+
+/* галочка белая при выборе с синим фоном */
+.number-row input[type="checkbox"]:checked {
+    background-color: #00AFFF; /* фон выбранного чекбокса */
+}
+
+.number-row input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 4px;
+    width: 4px;
+    height: 8px;
+    border: solid #fff; /* белая галочка */
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+
+/* Сбрасываем стандартный чекбокс */
+.all-numbers-row input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background-color: #fff; /* фон по умолчанию */
+    border: 1px solid #94A3BB; /* ← добавляем серую границу для невыбранного состояния */
+    position: relative;
+    cursor: pointer;
+}
+
+/* фон выбранного чекбокса с синей заливкой */
+.all-numbers-row input[type="checkbox"]:checked {
+    background-color: #00AFFF;
+}
+
+/* белая галочка через псевдоэлемент */
+.all-numbers-row input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 4px;
+    width: 4px;
+    height: 8px;
+    border: solid #fff; /* белая галочка */
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+
+/* Текст номера */
+.number-text {
+    color: #475569;
+    transition: color 0.2s ease;
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+.number-row {
+    display: flex;
+    align-items: center;
+}
+
+/* Нижняя панель кнопок */
+.popup-actions {
+    margin-top: 18px;
+    text-align: right;
+}
+
+/* Кнопка "Готово" */
+.popup-actions button {
+    background: #0EA5E9;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.25s ease;
+}
+
+.popup-actions button:hover {
+    background: #0284C7;
+}
+
+/* Локальный сброс и кастом только для радио внутри .sms-where-item */
+.sms-where-item input[type="radio"] {
+    appearance: none; /* сбрасываем нативный вид */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    margin: 0;
+
+    border: 1px solid #94A3BB;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* активное состояние */
+.sms-where-item input[type="radio"]:checked {
+    border: 4px solid #00AFFF;
+    background: white;
+}
+
+/* hover/focus */
+.sms-where-item input[type="radio"]:hover {
+    border-color: #00AFFF;
+}
+.sms-where-item input[type="radio"]:focus {
+    outline: none;
+}
+
+.phone-input-row {
+    display: flex;
+    gap: 8px; /* расстояние между input и кнопкой */
+    align-items: center; /* вертикальное выравнивание по центру */
+}
+
+.sms-add-phone-btn {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 16px; /* чуть меньше чем было 10px 24px */
+    border-radius: 6px; /* можно чуть меньше скругление */
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px; /* можно уменьшить шрифт, если нужно */
+    height: 40px; /* чтобы кнопка подстраивалась по высоте input */
+    margin-top: 8px;
+}
+.sms-section.account-row {
+    width: 100%; /* чтобы контейнер занимал всю ширину */
+}
+
+
+.sms-full-input {
+
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.sms-tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sms-tags-row.has-tags {
+    margin-top: 10px;
+}
+
+.add-phone-btn {
+    margin-top: 6px;
+    cursor: pointer;
+    color: #3b82f6;
+}
+
+.add-phone-input-block {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+}
+
+.add-phone-input {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.add-phone-save {
+    padding: 6px 10px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: white;
+}
+
+.add-phone-cancel {
+    background: none;
+    border: none;
+    color: #666;
+}
+
+/* Chrome, Safari, Edge (база на WebKit/Chromium) */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Опционально: убрать стрелочки в будущем стандартном API */
+input[type=number] {
+    appearance: textfield;
+}
+
+.mb-12 {
+    margin-bottom: 12px;
 }

@@ -1,0 +1,73 @@
+
+.phone-input-row {
+    display: flex;
+    gap: 8px; /* расстояние между input и кнопкой */
+    align-items: center; /* вертикальное выравнивание по центру */
+}
+
+.sms-add-phone-btn {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 6px 16px; /* чуть меньше чем было 10px 24px */
+    border-radius: 6px; /* можно чуть меньше скругление */
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px; /* можно уменьшить шрифт, если нужно */
+    height: 40px; /* чтобы кнопка подстраивалась по высоте input */
+    margin-top: 8px;
+}
+.sms-section.account-row {
+    width: 100%; /* чтобы контейнер занимал всю ширину */
+}
+
+
+.sms-full-input {
+
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.sms-tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+
+.add-phone-btn {
+    margin-top: 6px;
+    cursor: pointer;
+    color: #3b82f6;
+}
+
+.add-phone-input-block {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+}
+
+.add-phone-input {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.add-phone-save {
+    padding: 6px 10px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: white;
+}
+
+.add-phone-cancel {
+    background: none;
+    border: none;
+    color: #666;
+}

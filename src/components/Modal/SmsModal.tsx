@@ -1,62 +1,194 @@
-import React, {useState, useMemo, useEffect} from 'react';
-import { useForm } from 'react-hook-form';
+import React, {useState, useMemo, useEffect, useRef} from 'react';
+import {useForm} from 'react-hook-form';
 import './SmsModal.css';
+import Select from "react-select";
+import {defaultSelectStyles} from "../../ui/config/selectStyles.ts";
+import {getTokenFromCookies} from "../../api/cookieToken.ts";
+import type {AccountPhonesGroup, SmsModalProps, FormValues, ImageFile, SmsMaxMedia} from "../../types/types.ts";
+import {CostTooltip} from "../../ui/CostTooltip/CostTooltip.tsx";
+import {ImageUpload} from "../../ui/ImageUpload/ImageUpload.tsx";
+import {useAccountsPhones, useMaxAccounts} from "../../api/queries/smsModal/smsModal.ts";
+import {RepeatInterval} from "../../ui/RepeatInterval/RepeatInterval.tsx";
+
+interface MaxAccount {
+    id: number;
+    name: string;
+}
+
+interface UploadMediaResponse {
+    success: boolean;
+    media: SmsMaxMedia;
+}
 
 export function SmsModal({
                              type = 'new',
-                             initialNumbers = [],
                              onClose,
                              editData = null,
                              onSuccess
-                         }) {
+                         }: SmsModalProps) {
+    const [showTooltipSMS, setShowTooltipSMS] = useState(false);
+    const [showTooltipRadio, setShowTooltipRadio] = useState(false);
+    const [showTooltipMax, setShowTooltipMax] = useState(false);
+    const [numbersPopupOpen, setNumbersPopupOpen] = useState<boolean>(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [accountsPhones, setAccountsPhones] = useState<AccountPhonesGroup[]>([]);
 
-    const [jwtToken, setJwtToken] = useState('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6InRlc3R1c2VyIiwiY29udGFjdF9pZCI6MTIzLCJleHAiOjE3NjIzNTAyODQsImlhdCI6MTc2MjI2Mzg4NH0.HPC7JgKq2m2KINvN7GTFhCHYdMQ7jgjTpwvAnBdxldQ');
+    const [images, setImages] = useState<ImageFile[]>(editData?.sms_max?.images?.map(img => ({
+        id: Math.random().toString(36).substr(2, 9),
+        preview: img.url,
+        name: img.filename,
+        url: img.url,
+        filename: img.filename,
+        mimetype: img.mimetype,
+        size: img.size
+    })) || []);
 
-    const [availableNumbers] = useState([
-        '79991231212',
-        '79995556677',
-        '79161230000',
-        ...initialNumbers,
-    ]);
+    const options = [1, 2, 3, 4, 5, 6].map(m => ({
+        value: m,
+        label: `${m} месяц${m > 1 ? 'а' : ''}`
+    }));
 
-    // Моковые данные для аккаунтов
-    const [dynamicAccounts, setDynamicAccounts] = useState([
-        { id: '1', name: 'Основной аккаунт' },
-        { id: '2', name: 'Резервный аккаунт' },
-        { id: '3', name: 'Аккаунт для тестов' },
-        { id: '4', name: 'Бизнес аккаунт' },
-        { id: '5', name: 'Личный аккаунт' }
-    ]);
     // React Hook Form
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: {errors, isSubmitting},
         watch,
-        setError, // ← добавили
+        setError,
         setValue,
-        trigger,
-        reset // ← добавляем
-    } = useForm({
+        clearErrors,
+        reset
+    } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
             newClientMonths: 1,
             message: '',
+            maxMessage: '',
             sendMode: 'smart',
-            selectedAccount:  '',
+            selectedAccount: '',
             dailyLimit: '',
             repeatMinutes: 60,
-            selectedTags: []
+            selectedTags: [],
+            wait_durat:60
         }
     });
 
     const watchMessage = watch('message');
+    const watchMaxMessage = watch('maxMessage');
     const watchSendMode = watch('sendMode');
 
-    const [selectedTags, setSelectedTags] = useState([]);
-    const [selectedNumberValue, setSelectedNumberValue] = useState('');
-    const [loadingAccounts, setLoadingAccounts] = useState(false);
+    // Используем React Query для аккаунтов Max
+    const {
+        data: maxAccountsData,
+        isLoading: loadingMaxSelect,
+        refetch: fetchMaxAccounts
+    } = useMaxAccounts();
 
+    // Используем React Query для номеров аккаунтов
+    const {
+        data: accountsData,
+        isLoading: loadingAccounts,
+        refetch: fetchAccounts
+    } = useAccountsPhones();
+
+    // Преобразуем данные в формат для Select
+    const maxAccounts = useMemo(() => {
+        if (!maxAccountsData) return [{value: "", label: "Не выбран"}];
+
+        const options = maxAccountsData.map((account: MaxAccount) => ({
+            value: account.id.toString(),
+            label: account.name
+        }));
+
+        return [{value: "", label: "Не выбран"}, ...options];
+    }, [maxAccountsData]);
+
+    // Обрабатываем данные номеров при их получении
+    useEffect(() => {
+        if (accountsData) {
+            const list: Array<{ sellerPhone: string; account_name: string }> = accountsData;
+
+            const transformed = list.reduce((acc: AccountPhonesGroup[], item) => {
+                const phone = item.sellerPhone.replace(/^\+/, "");
+                const name = item.account_name || "Без имени";
+
+                const existing = acc.find(el => el.name === name);
+                if (existing) {
+                    const uniqueNumbers = [...new Set([...existing.numbers, phone])];
+                    existing.numbers = uniqueNumbers;
+                } else {
+                    acc.push({
+                        id: name,
+                        name,
+                        numbers: [phone],
+                        open: false,
+                        addPhoneMode: false
+                    });
+                }
+                return acc;
+            }, []);
+
+            setAccountsPhones(transformed);
+        }
+    }, [accountsData]);
+
+    const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (dropdownRef.current && !dropdownRef.current.contains(target)) {
+                setNumbersPopupOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const formatPhoneDisplay = (digits: string) => {
+        if (!digits) return '';
+        const cleaned = digits.replace(/\D/g, '');
+        if (cleaned.length !== 11) return digits;
+        return `+7 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7, 9)}-${cleaned.slice(9, 11)}`;
+    };
+
+    useEffect(() => {
+        if (editData?.max_account) {
+            setValue('selectedAccount', String(editData.max_account));
+        } else {
+            setValue('selectedAccount', '');
+        }
+    }, [editData, setValue]);
+
+    const allUniqueNumbers = useMemo(() =>
+            [...new Set(accountsPhones.flatMap(a => a.numbers))],
+        [accountsPhones]
+    );
+
+    const handleAllNumbersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedTags(allUniqueNumbers);
+            setValue("selectedTags", allUniqueNumbers);
+        } else {
+            setSelectedTags([]);
+            setValue("selectedTags", []);
+        }
+    };
+
+    const isAllNumbersSelected = selectedTags.length > 0 &&
+        selectedTags.length === allUniqueNumbers.length;
+
+    // Функция для открытия попапа номеров
+    const handleNumbersPopupOpen = () => {
+        setNumbersPopupOpen(prev => !prev);
+        if (!numbersPopupOpen) {
+            fetchAccounts(); // Запускаем запрос через React Query
+        }
+    };
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) {
@@ -64,133 +196,157 @@ export function SmsModal({
         }
     };
 
-    // constants
-    const MAX_CHARS = 134;
-    const COST = 40;
-    const SMS_PER = MAX_CHARS;
-
-    // derived values
-    const charCount = watchMessage?.length || 0;
-    const smsCount = Math.max(1, Math.ceil(charCount / SMS_PER || 0));
-    const cost = smsCount * COST;
-
-    // add selected number to tags
-    function handleSelectNumber(e) {
-        const v = e.target.value;
-        if (!v) return;
-        if (!selectedTags.includes(v)) {
-            const updated = [...selectedTags, v];
+    const handleSelectNumber = (value: string) => {
+        if (!selectedTags.includes(value)) {
+            const updated = [...selectedTags, value];
             setSelectedTags(updated);
-            setValue("selectedTags", updated); // ✅ обновляем форму
-            trigger("selectedTags"); // ✅ мгновенная валидация
+            setValue("selectedTags", updated);
+            clearErrors('selectedTags');
         }
-        setSelectedNumberValue('');
-        e.target.value = '';
-    }
+    };
 
-    function handleRemoveTag(number) {
+    const handleRemoveTag = (number: string) => {
         const updated = selectedTags.filter(n => n !== number);
         setSelectedTags(updated);
-        setValue("selectedTags", updated); // ✅ обновляем форму
-        trigger("selectedTags");
-    }
+        setValue("selectedTags", updated);
+        clearErrors('selectedTags');
+    };
 
+    const detectCharacterSet = (text: string) => /[а-яА-ЯёЁ]/.test(text) ? 'cyrillic' : 'latin';
 
-    const monthsOptions = useMemo(
-        () => [1, 2, 3, 4, 5, 6].map(n => ({
-            value: String(n),
-            label: `${n} ${n === 1 ? 'месяц' : n < 5 ? 'месяца' : 'месяцев'}`
-        })),
-        []
-    );
+    const calculateSmsStats = (text: string) => {
+        if (!text) return {charCount: 0, smsCount: 1, cost: 20, maxChars: 160, characterSet: 'latin'};
 
-    async function fetchAccounts(contactId) {
-        setLoadingAccounts(true);
-        try {
-            const response = await fetch("https://lk.b2b-help.ru/api/sms-card/get_accounts.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contact_id: contactId,
-                    api_key: "token" // ← замени на реальный токен
-                })
-            });
+        const characterSet = detectCharacterSet(text);
+        const maxCharsPerSms = characterSet === 'cyrillic' ? 70 : 160;
+        const costPerSms = 20;
 
-            if (!response.ok) {
-                throw new Error("Ошибка при получении аккаунтов");
-            }
+        // ПЕРВОНАЧАЛЬНЫЙ ПОДСЧЕТ (уже правильный)
+        const charCount = text.length;
+        const smsCount = Math.max(1, Math.ceil(charCount / maxCharsPerSms));
+        const cost = smsCount * costPerSms;
 
-            const data = await response.json();
-            console.log('data', data)
-            // предполагаем, что API возвращает массив {id, name}
-            setDynamicAccounts(data.accounts || []);
-        } catch (err) {
-            console.error(err);
-            alert("Не удалось загрузить аккаунты");
-        } finally {
-            setLoadingAccounts(false);
-        }
-    }
+        // ДОПОЛНИТЕЛЬНО: подсчет специальных символов для отладки
+        const newlineCount = (text.match(/\n/g) || []).length;
+        const carriageReturnCount = (text.match(/\r/g) || []).length;
 
+        return {
+            charCount,
+            smsCount,
+            cost,
+            maxChars: maxCharsPerSms,
+            characterSet,
+            // для отладки:
+            newlineCount,
+            carriageReturnCount
+        };
+    };
+
+    const smsStats = useMemo(() => calculateSmsStats(watchMessage), [watchMessage]);
+
+    const [selectedAccountValue, setSelectedAccountValue] = useState<{ value: string; label: string }>({
+        value: '',
+        label: 'Не выбран'
+    });
 
     useEffect(() => {
-        if (editData) {
-            const initialTag = editData.avito_phone
-                ? editData.avito_phone.replace(/\D/g, '')
-                : '';
-
-            const mode =
-                editData.meth_sms && editData.meth_max ? 'smart' :
-                    editData.meth_sms && !editData.meth_max ? 'sms' :
-                        !editData.meth_sms && editData.meth_max ? 'max' :
-                            'smart';
-
-            reset({
-                message: editData.sms_text || '',
-                selectedTags: initialTag ? [initialTag] : [],
-                newClientMonths: Number(editData.new_buyer) || 1,
-                repeatMinutes: Number(editData.not_send) || 60,
-                sendMode: mode,
-                selectedAccount: editData.max_account ||  '',
-                dailyLimit: editData.limit_sum != null ? String(editData.limit_sum) : '',
-            });
-
-            setSelectedTags(initialTag ? [initialTag] : []);
-        } else {
+        if (!editData) {
             reset({
                 message: '',
+                maxMessage: '',
                 selectedTags: [],
                 newClientMonths: 1,
                 repeatMinutes: 60,
                 sendMode: 'smart',
                 selectedAccount: '',
-                dailyLimit: ''
+                dailyLimit: '',
+                wait_durat: 60
             });
-
             setSelectedTags([]);
+            setSelectedAccountValue({value: '', label: 'Не выбран'});
+            return;
         }
 
-        setSelectedNumberValue('');
-    }, [editData]);
+        const initialTag = editData.avito_phone?.replace(/\D/g, '') || '';
 
+        const mode: 'smart' | 'sms' | 'max' =
+            editData.meth_sms && editData.meth_max ? 'smart' :
+                editData.meth_sms && !editData.meth_max ? 'sms' :
+                    !editData.meth_sms && editData.meth_max ? 'max' : 'smart';
 
+        // Обработка max_account
+        let accountValue: { value: string; label: string };
+        if (typeof editData.max_account === 'string') {
+            accountValue = {value: editData.max_account, label: editData.max_account};
+        } else if (Array.isArray(editData.max_account) && editData.max_account.length > 0) {
+            accountValue = {
+                value: String(editData.max_account[0].id),
+                label: editData.max_account[0].name
+            };
+        } else {
+            accountValue = {value: '', label: 'Не выбран'};
+        }
 
+        // Сбрасываем форму
+        reset({
+            message: editData.sms_text || '',
+            maxMessage: editData.sms_max?.text || '',
+            selectedTags: initialTag ? [initialTag] : [],
+            newClientMonths: Number(editData.new_buyer) || 1,
+            repeatMinutes: Number(editData.not_send) || 60,
+            sendMode: mode,
+            selectedAccount: accountValue.value,
+            dailyLimit: editData.limit_sum != null ? String(editData.limit_sum) : '',
+            wait_durat: editData?.wait_durat
+        });
 
-    const onSubmit = async (data) => {
-        if (!jwtToken) {
+        setSelectedTags(initialTag ? [initialTag] : []);
+    }, [editData, reset]);
+
+    async function uploadMediaToS3(file: File | SmsMaxMedia): Promise<SmsMaxMedia> {
+        // Если это уже SmsMaxMedia (старое изображение), возвращаем как есть
+        if ('url' in file && 'filename' in file) {
+            return file as SmsMaxMedia;
+        }
+
+        // Если это новый файл, загружаем
+        const formData = new FormData();
+        formData.append("media", file as File);
+
+        const response = await fetch("https://smscard.b2b-help.ru/api/media/upload", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${getTokenFromCookies()}`
+            },
+            body: formData
+        });
+
+        const result: UploadMediaResponse = await response.json();
+
+        if (!result.success || !result.media) {
+            console.error("UPLOAD ERROR:", result);
+            throw new Error("Ошибка загрузки файла");
+        }
+
+        return result.media;
+    }
+
+    const onSubmit = async (data: FormValues) => {
+        console.log('data', data)
+
+        if (!getTokenFromCookies()) {
             alert("Нет JWT токена! Сначала авторизуйтесь.");
             return;
         }
 
-        if (selectedTags.length === 0) {
-            setError("selectedTags", { type: "manual", message: "Выберите хотя бы один номер" });
+        if (!data.selectedTags || data.selectedTags.length === 0) {
+            setError("selectedTags", {type: "manual", message: "Выберите хотя бы один номер"});
             return;
         }
 
         const sms_type = type === "new" ? 1 : 2;
-
         const new_buyer = sms_type === 1 ? Number(data.newClientMonths || 1) : null;
-        const not_send  = sms_type === 2 ? Number(data.repeatMinutes || 60) : null;
+        const not_send = sms_type === 2 ? Number(data.repeatMinutes || 60) : null;
 
         let meth_sms = false;
         let meth_max = false;
@@ -208,36 +364,115 @@ export function SmsModal({
         const max_account = (meth_sms && !meth_max) ? null : String(data.selectedAccount);
         const parsedLimit = data.dailyLimit ? Number(data.dailyLimit) : null;
 
-        const body = {
-            contact_id: editData?.contact_id || 16511,
-            fio: "Тестовый Пользователь",
+        const normalizedPhone = selectedTags[0].replace(/^\+/, "");
+
+        const body: any = {
             name_id: "test_user",
             sms_type,
-            sms_text: data.message,
-            avito_phone: selectedTags[0],
-            is_active: true,
+            avito_phone: normalizedPhone,
+            is_active: editData?.is_active,
             new_buyer,
             not_send,
             meth_sms,
             meth_max,
             max_account,
+            num_of_char: smsStats.charCount,
             limit_sum: parsedLimit,
-            limit_ost: parsedLimit
+            limit_ost: parsedLimit,
+            wait_durat: data.wait_durat
         };
 
+        if (meth_sms) {
+            body.sms_text = data.message;
+        } else {
+            body.sms_text = null;
+        }
+
+        if (meth_max) {
+            body.sms_max = data.maxMessage;
+        } else {
+            body.sms_max = null;
+        }
+
+        if (meth_sms && meth_max) {
+            if (!data.message || !data.maxMessage) {
+                setError("root.serverError", {
+                    type: "manual",
+                    message: "При режиме Smart необходимо заполнить оба текста: для СМС и для Max"
+                });
+                return;
+            }
+        }
+
+        if (meth_sms && !meth_max && !data.message) {
+            setError("message", {
+                type: "manual",
+                message: "Текст СМС обязателен при отправке только через СМС"
+            });
+            return;
+        }
+
+        if (!meth_sms && meth_max && !data.maxMessage) {
+            setError("maxMessage", {
+                type: "manual",
+                message: "Текст для Max обязателен при отправке только через Max"
+            });
+            return;
+        }
+
         try {
-            let response;
+            let uploadedImages: SmsMaxMedia[] = [];
+
+            // Новые изображения
+            if (meth_max && images.length > 0) {
+                uploadedImages = await Promise.all(
+                    images.map(async (img) => {
+                        // если это старое изображение → не загружаем повторно
+                        if (!img.file) {
+                            return {
+                                url: img.url ?? "",
+                                filename: img.filename ?? img.name,
+                                mimetype: img.mimetype ?? "image/jpeg",
+                                size: img.size ?? 0
+                            };
+                        }
+
+                        // новая картинка → загружаем в S3
+                        const meta = await uploadMediaToS3(img.file);
+
+                        return {
+                            url: meta.url,
+                            filename: meta.filename,
+                            mimetype: meta.mimetype,
+                            size: meta.size
+                        };
+                    })
+                );
+            }
+
+            if (meth_max) {
+                body.sms_max = {
+                    text: data.maxMessage || "",
+                    images: uploadedImages,
+                    videos: [],
+                    files: []
+                };
+            } else {
+                body.sms_max = null;
+            }
+
+            let response: Response;
+
             if (editData) {
                 const updateUrl = new URL("https://smscard.b2b-help.ru/api/sms-cards/update");
-                updateUrl.searchParams.append("contact_id", body.contact_id);
                 updateUrl.searchParams.append("avito_phone", body.avito_phone);
-                updateUrl.searchParams.append("sms_type", body.sms_type);
+                updateUrl.searchParams.append("sms_type", String(body.sms_type));
 
                 response = await fetch(updateUrl.toString(), {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${jwtToken}`
+                        "Authorization": `Bearer ${getTokenFromCookies()}`
                     },
                     body: JSON.stringify(body)
                 });
@@ -246,48 +481,65 @@ export function SmsModal({
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${jwtToken}`
+                        "Authorization": `Bearer ${getTokenFromCookies()}`
                     },
                     body: JSON.stringify(body)
                 });
             }
 
+            const text = await response.text();
+            console.log("Raw response text:", text);
+
             if (!response.ok) {
-                const txt = await response.text();
-                console.error("Ошибка:", txt);
-                alert(editData ? "Ошибка при сохранении записи" : "Ошибка при добавлении записи");
+                let errorMsg = "Произошла неизвестная ошибка";
+
+                const match = text.match(/"error"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/);
+                if (match) {
+                    errorMsg = match[1];
+                    console.log("Extracted error message via regex:", errorMsg);
+                } else {
+                    console.log("Could not extract 'error' via regex, using raw text");
+                    errorMsg = text;
+                }
+
+                console.log("Final error message to display:", errorMsg);
+                setError("root.serverError", {type: "manual", message: errorMsg});
                 return;
             }
 
-            const result = await response.json();
-            console.log("Успешно:", result);
-
-            // ✅ Обновляем данные после успешного добавления/редактирования
-            if (typeof onSuccess === "function") {
-                await onSuccess(); // родительская функция должна делать GET-запрос всех карточек
-            }
-
-            onClose(); // закрываем модалку
+            console.log("Успешно:", text);
+            if (onSuccess) await onSuccess();
+            onClose();
 
         } catch (error) {
             console.error("Ошибка сети:", error);
-            alert("Ошибка сети");
+            setError("root.serverError", {type: "manual", message: "Ошибка сети. Проверьте соединение."});
         }
     };
 
-
-
     return (
         <div className="sms-modal-overlay" role="dialog" aria-modal="true" onClick={handleOverlayClick}>
+
+            {/* Крестик для закрытия */}
+            <div
+                className="close-button"
+                onClick={onClose}
+            >
+                <img src="/closeButonModal.svg" alt="closeButonModal.svg"/>
+            </div>
+
             <div className="sms-modal-container" onClick={(e) => e.stopPropagation()}>
+
+
+
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
                     {/* header */}
                     <div className="sms-modal-header">
-                        <div className="sms-modal-back-btn" onClick={onClose} title="Закрыть">
-                            <img src="/arr_buttons.svg" alt=""/>
-                        </div>
+                        {/*<div className="sms-modal-back-btn" onClick={onClose} title="Закрыть">*/}
+                        {/*    <img src="/arr_buttons.svg" alt=""/>*/}
+                        {/*</div>*/}
                         <div className="sms-modal-title-block">
-                            <div className="sms-modal-title">SMS визитка</div>
+                            <div className="sms-modal-title">СМС визитка</div>
                             <div className="sms-modal-subtitle">
                                 {type === 'new'
                                     ? 'Добавление СМС-визитки новым клиентам'
@@ -298,52 +550,99 @@ export function SmsModal({
 
                     <div className="sms-modal-divider"/>
 
-                    {/* Выберите номер */}
-                    <div className="sms-section">
-                        <div className="sms-section-title">Выберите номер</div>
+                    {/*Выберите номер - НОВАЯ СТРУКТУРА */}
+                    <div className="sms-section-select">
+                        <div className="sms-section-title">Выберите номера</div>
                         <div className="sms-section-sub">
                             {type === 'new'
-                                ? 'Мы отправим SMS визитку после успешного звонка на этот номер'
+                                ? 'Мы отправим СМС-визитку после успешного звонка на этот номер'
                                 : 'В случае пропущенного звонка на этот номер звонящему будет отправлено СМС-извинение. Извинение будет отправлено в рабочее время, настроенное для номера'}
                         </div>
 
-                        <select
-                            className="sms-select"
-                            value={selectedNumberValue}
-                            onChange={(e) => {
-                                const selected = e.target.value;
-                                if (!selected) return;
-
-                                // добавляем выбранный номер в теги, если его там ещё нет
-                                if (!selectedTags.includes(selected)) {
-                                    const updated = [...selectedTags, selected];
-                                    setSelectedTags(updated);
-                                    setValue("selectedTags", updated); // обновляем форму
-                                    trigger("selectedTags"); // мгновенная валидация
-                                }
-
-                                // обновляем стейт выбранного номера
-                                setSelectedNumberValue(selected);
-
-                                // очищаем select
-                                setSelectedNumberValue('');
-                                e.target.value = '';
-                            }}
-                            // onClick={async () => {
-                            //     // делаем запрос на сервер при клике на select
-                            //     await fetchAccounts(editData?.contact_id || 0);
-                            // }}
+                        {/* Кастомный select */}
+                        <div
+                            className={`sms-select ${selectedTags.length > 0 ? 'has-tags' : ''}`}
+                            onClick={handleNumbersPopupOpen}
                         >
-                            <option value="">Выберите номер</option>
-                            {availableNumbers.map((n) => (
-                                <option key={n} value={n}>
-                                    {formatPhone(n)}
-                                </option>
-                            ))}
-                        </select>
+                            {selectedTags.length === 0
+                                ? 'Выберите номер'
+                                : `Выбрано: ${selectedTags.length}`}
+                        </div>
 
+                        {/* Выпадающий блок вместо модалки */}
+                        {numbersPopupOpen && (
+                            <div className="numbers-dropdown" ref={dropdownRef}>
+                                {loadingAccounts ? (
+                                    <div className="loading-row">Загружаем номера...</div>
+                                ) : (
+                                    <>
+                                        {/* Все номера */}
+                                        <label className="all-numbers-row">
+                                            <input
+                                                type="checkbox"
+                                                checked={isAllNumbersSelected}
+                                                onChange={handleAllNumbersChange}
+                                            />
+                                            <span>Все номера</span>
+                                        </label>
 
-                        <div className="sms-tags-row">
+                                        {/* Аккаунты */}
+                                        {accountsPhones.map((account: AccountPhonesGroup) => (
+                                            <div key={account.id} className="account-block">
+                                                <div
+                                                    className="account-header"
+                                                    onClick={() => {
+                                                        setAccountsPhones(prev =>
+                                                            prev.map(a =>
+                                                                a.id === account.id ? {...a, open: !a.open} : a
+                                                            )
+                                                        );
+                                                    }}
+                                                >
+                                                    <div className="acc-name">акк: {account.name}</div>
+                                                    <div className="acc-right">
+                                                        <span
+                                                            className={`acc-count ${account.open ? 'open' : 'closed'}`}>
+                                                            {account.numbers.length}
+                                                        </span>
+                                                        <img
+                                                            src={account.open ? "/arr-acc-up.svg" : "/arr-acc-down.svg"}
+                                                            alt=""
+                                                            className="acc-arrow-icon"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {account.open && (
+                                                    <div className="numbers-list">
+                                                        {account.numbers.map((num: string) => (
+                                                            <label key={num} className="number-row">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedTags.includes(num)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            handleSelectNumber(num);
+                                                                        } else {
+                                                                            handleRemoveTag(num);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <span
+                                                                    className="number-text">{formatPhoneDisplay(num)}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Выбранные номера (теги) */}
+                        <div className={`sms-tags-row ${selectedTags.length > 0 ? 'has-tags' : ''}`}>
                             {selectedTags.map((n) => (
                                 <div
                                     key={n}
@@ -351,7 +650,7 @@ export function SmsModal({
                                     onClick={() => handleRemoveTag(n)}
                                     title="Клик — убрать номер"
                                 >
-                                    {formatPhone(n)}
+                                    {formatPhoneDisplay(n)}
                                 </div>
                             ))}
                         </div>
@@ -367,129 +666,6 @@ export function SmsModal({
                             <div className="sms-error-text">{errors.selectedTags.message}</div>
                         )}
                     </div>
-
-
-                    {/* блок с серовато-голубым фоном */}
-                    <div className="sms-card">
-                        <div className="sms-card-top">
-                            <div className="sms-card-title">Укажите текст SMS визитки</div>
-                            <div className="sms-card-help">{/* вставишь свой img */}</div>
-                        </div>
-
-                        <div className="sms-card-sub">Напишите сообщение новому клиенту</div>
-
-                        <textarea
-                            className={`sms-textarea ${errors.message ? 'sms-input-error' : ''}`}
-                            placeholder="Текст..."
-                            rows={4}
-                            maxLength={1000}
-                            {...register('message', {
-                                required: 'Текст сообщения обязателен',
-                                minLength: {
-                                    value: 5,
-                                    message: 'Минимальная длина сообщения - 5 символов'
-                                },
-                                maxLength: {
-                                    value: 1000,
-                                    message: 'Максимальная длина сообщения - 1000 символов'
-                                }
-                            })}
-                        />
-                        {errors.message && (
-                            <div className="sms-error-text">{errors.message.message}</div>
-                        )}
-
-                        <div className="sms-stats">
-                            <div>
-                                Символов: <span className="sms-accent">{charCount}</span> из <span
-                                className="sms-accent">{MAX_CHARS}</span>
-                            </div>
-                            <div>
-                                SMS: <span className="sms-accent">{smsCount}</span>
-                            </div>
-                            <div>
-                                Стоимость: <span className="sms-accent">{cost}</span> руб
-                            </div>
-                        </div>
-                    </div>
-
-                    {type === 'apology' && (
-                        <div className="sms-section">
-                            <div className="sms-section-title">Повторная отправка</div>
-                            <div className="sms-repeat-row">
-                                <div className="sms-repeat-text">
-                                    Не отправлять визитку повторно на тот же номер в течение
-                                </div>
-                                <div className="sms-repeat-inputs">
-                                    <div className="number-wrapper">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            max={60}
-                                            step={1}
-                                            className={`sms-number-input ${errors.repeatMinutes ? 'sms-input-error' : ''}`}
-                                            {...register('repeatMinutes', {
-                                                required: 'Укажите интервал в минутах',
-                                                min: { value: 1, message: 'Минимальное значение - 1 минута' },
-                                                max: { value: 60, message: 'Максимальное значение - 60 минут' }
-                                            })}
-                                        />
-                                        <div className="custom-arrows">
-                                            <button
-                                                type="button"
-                                                className="arrow-up"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const current = Number(watch('repeatMinutes')) || 1;
-                                                    if (current < 60) setValue('repeatMinutes', current + 1, { shouldValidate: true });
-                                                }}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="arrow-down"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const current = Number(watch('repeatMinutes')) || 1;
-                                                    if (current > 1) setValue('repeatMinutes', current - 1, { shouldValidate: true });
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="sms-min-text">минут</div>
-                                </div>
-                            </div>
-                            {errors.repeatMinutes && (
-                                <div className="sms-error-text">{errors.repeatMinutes.message}</div>
-                            )}
-                        </div>
-                    )}
-
-
-                    {/* если type === 'new' — блок решите кого считать новым клиентом */}
-                    {type === 'new' && (
-                        <div className="sms-section">
-                            <div className="sms-section-title">Решите кого мы будем считать новым клиентом</div>
-                            <div className="sms-section-sub">
-                                Считать клиента «новым»,<br/> если по его номеру не было звонков:
-                            </div>
-
-                            <select
-                                className="sms-select"
-                                {...register('newClientMonths', {
-                                    required: 'Выберите период'
-                                })}
-                            >
-                                {[1, 2, 3, 4, 5, 6].map(m => (
-                                    <option key={m} value={m}>
-                                        {m} месяц{m > 1 ? 'а' : ''}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.newClientMonths && (
-                                <div className="sms-error-text">{errors.newClientMonths.message}</div>
-                            )}
-                        </div>
-                    )}
 
                     {/* Блок куда отправить */}
                     <div className="sms-section">
@@ -507,7 +683,25 @@ export function SmsModal({
                                         className="sms-round-radio"
                                     />
                                     <span className="sms-where-text">Smart</span>
-                                    <img src="/addClietquestion.svg" alt="" className="sms-help-icon"/>
+                                    <div className="sms-tooltip-wrapperRadio">
+                                        <img
+                                            className="sms-card-title-img"
+                                            src="/question.svg"
+                                            alt="question"
+                                            onClick={() => setShowTooltipRadio(prev => !prev)}
+                                        />
+                                        {showTooltipRadio && (
+                                            <div className="sms-tooltipRadio">
+                                                <img src="/Rectangle.svg" alt=""
+                                                     className="sms-tooltip-triangleRadio"/>
+                                                <div className="sms-tooltip-text">
+                                                    Smart — приоритетный способ отправки в Max, если он не доступен,
+                                                    то
+                                                    визитка отправится по СМС
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </label>
 
                                 <label className="sms-where-item">
@@ -517,7 +711,7 @@ export function SmsModal({
                                         {...register('sendMode')}
                                         className="sms-round-radio"
                                     />
-                                    <span className="sms-where-text">Только в SMS</span>
+                                    <span className="sms-where-text">Только в СМС</span>
                                 </label>
 
                                 <label className="sms-where-item">
@@ -535,59 +729,276 @@ export function SmsModal({
                                 <div className="sms-error-text">{errors.sendMode.message}</div>
                             )}
 
-                            {/* ✅ Показываем аккаунт только НЕ при "sms" */}
                             {watchSendMode !== 'sms' && (
                                 <div className="sms-section account-row">
                                     <div className="sms-section-title-inline">С какого аккаунта отправлять</div>
-                                    <select
-                                        className="sms-account-select"
-                                        {...register('selectedAccount', {
-                                            required: 'Выберите аккаунт'
-                                        })}
-                                        // onFocus={() => fetchAccounts(editData?.contact_id || 0)} // при фокусе делаем запрос
-                                    >
-                                        {dynamicAccounts?.map((a) => (
-                                            <option key={a.id} value={a.id}>
-                                                {a.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={maxAccounts}
+                                        value={maxAccounts.find(opt => opt.value === watch('selectedAccount')) ?? selectedAccountValue}
+                                        onChange={(selected: { value: string } | null) =>
+                                            setValue('selectedAccount', selected?.value ?? "")
+                                        }
+                                        styles={defaultSelectStyles('240px')}
+                                        onMenuOpen={() => fetchMaxAccounts()}
+                                        isLoading={loadingMaxSelect}
+                                    />
                                 </div>
                             )}
-                            {errors.selectedAccount && (
-                                watchSendMode !== 'sms' && (
-                                    <div className="sms-error-text">{errors.selectedAccount.message}</div>
-                                )
+                            {errors.selectedAccount && watchSendMode !== 'sms' && (
+                                <div className="sms-error-text">{errors.selectedAccount.message}</div>
                             )}
                         </div>
                     </div>
 
+                    {/* НОВЫЙ БЛОК: Укажите текст Сообщения в Max */}
+                    {(watchSendMode === 'smart' || watchSendMode === 'max') && (
+                        <div className="sms-card">
+                            <div className="sms-card-top">
+                                <div className="sms-card-title">Укажите текст Сообщения в Max</div>
+                                <div className="sms-tooltip-wrapper">
+                                    {/* Вопросик */}
+                                    <img
+                                        className="sms-card-title-img"
+                                        src="/question.svg"
+                                        alt="question"
+                                        onClick={() => setShowTooltipMax((prev) => !prev)}
+                                    />
+
+                                    {/* Tooltip */}
+                                    {showTooltipMax && (
+                                        <div className="sms-tooltip">
+                                            <img src="/Rectangle.svg" alt="" className="sms-tooltip-triangle"/>
+                                            <div className="sms-tooltip-text">
+                                                Введите текст сообщения для отправки через платформу Max.
+                                                <br/>
+                                                Сообщение будет отправлено через выбранный аккаунт Max.
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="sms-card-sub">Напишите сообщение для отправки через Max</div>
+
+                            <textarea
+                                className={`sms-textarea ${errors.maxMessage ? 'sms-input-error' : ''}`}
+                                placeholder="Текст сообщения для Max..."
+                                rows={4}
+                                maxLength={1000}
+                                {...register('maxMessage', {
+                                    //@ts-ignore
+                                    required: watchSendMode !== 'sms' ? 'Текст сообщения для Max обязателен' : false,
+                                    minLength: {value: 5, message: 'Минимальная длина сообщения - 5 символов'},
+                                    maxLength: {
+                                        value: 1600,
+                                        message: 'Максимальная длина сообщения - 1600 символов'
+                                    },
+                                })}
+                            />
+
+
+                            {errors.maxMessage && (
+                                <div className="sms-error-text">{errors.maxMessage.message}</div>
+                            )}
+
+                            {/* 🔽 Блок прикрепления изображений */}
+                            <div className="sms-images-upload">
+                                <ImageUpload images={images} onChange={setImages} maxImages={5}/>
+                            </div>
+
+
+                            <div className="sms-stats">
+                                <div>
+                                    Символов: <span className="sms-accent">{watchMaxMessage?.length || 0}</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    )}
+
+                    {type === 'apology' && (
+                        <RepeatInterval
+                            title="Повторная отправка"
+                            description="Не отправлять визитку повторно на тот же номер в течение"
+                            unit="минут"
+                            register={register}
+                            errors={errors}
+                            watch={watch}
+                            setValue={setValue}
+                            fieldName="repeatMinutes"
+                            //@ts-ignore
+                            min={1}
+                            max={60}
+                            minMessage="Минимальное значение - 1 минута"
+                            maxMessage="Максимальное значение - 60 минут"
+                        />
+                    )}
+
+                    {/* Блок для текста СМС-визитки */}
+                    {watchSendMode !== 'max' && <div className="sms-card">
+                        <div className="sms-card-top">
+                            <div className="sms-card-title">Укажите текст СМС-визитки</div>
+                            <div className="sms-tooltip-wrapper">
+                                {/* Вопросик */}
+                                <img
+                                    className="sms-card-title-img"
+                                    src="/question.svg"
+                                    alt="question"
+                                    onClick={() => setShowTooltip(prev => !prev)}
+                                />
+
+                                {/* Tooltip */}
+                                {showTooltip && (
+                                    <div className="sms-tooltip">
+                                        {/* Треугольник сверху справа */}
+                                        <img src="/Rectangle.svg" alt="" className="sms-tooltip-triangle"/>
+
+                                        <div className="sms-tooltip-text">
+                                            Введите текст визитки, чтобы получить количество необходимых СМС для
+                                            отправки.
+                                            <br/>
+                                            В 1 SMS помещается до 140 символов на английском языке и до 70 символов
+                                            на
+                                            русском.
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="sms-card-sub">Напишите сообщение новому клиенту</div>
+
+                        <textarea
+                            className={`sms-textarea ${errors.message ? 'sms-input-error' : ''}`}
+                            placeholder="Текст..."
+                            rows={4}
+                            maxLength={1000}
+                            {...register('message', {
+                                //@ts-ignore
+                                required: watchSendMode !== 'max' ? 'Текст сообщения обязателен' : false,
+                                minLength: {
+                                    value: 5,
+                                    message: 'Минимальная длина сообщения - 5 символов'
+                                },
+                                maxLength: {
+                                    value: 1600,
+                                    message: 'Максимальная длина сообщения - 1600 символов'
+                                }
+                            })}
+                        />
+                        {/* Ошибка будет показываться только после попытки сабмита */}
+                        {errors.message && (
+                            <div className="sms-error-text">{errors.message.message}</div>
+                        )}
+
+                        <div className="sms-stats">
+                            <div>
+                                Символов: <span className="sms-accent">{smsStats.charCount}</span>
+                                {smsStats.characterSet === 'cyrillic' && (
+                                    <span className="sms-charset-info"> (кириллица)</span>
+                                )}
+                                {smsStats.characterSet === 'latin' && (
+                                    <span className="sms-charset-info"> (латиница)</span>
+                                )}
+                            </div>
+                            <div>
+                                СМС: <span className="sms-accent">{smsStats.smsCount}</span>
+                            </div>
+                            <div className="sms-cost-with-tooltip">
+                                Стоимость
+                                {/* Вопросик */}
+                                <img
+                                    className="sms-card-title-img"
+                                    src="/question.svg"
+                                    alt="question"
+                                    onClick={() => setShowTooltipSMS(prev => !prev)}
+                                />
+
+                                {/* Всплывающая подсказка */}
+                                {showTooltipSMS && (
+                                    <div className="sms-tooltip-bubble">
+                                        <CostTooltip smsCount={smsStats.smsCount}/>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
+                    </div>}
+
+                    {/* если type === 'new' — блок решите кого считать новым клиентом */}
+                    {type === 'new' && (
+                        <div className="sms-section" style={{width: '100%'}}>
+                            <div className="sms-section-title">Решите кого мы будем считать новым клиентом</div>
+                            <div className="sms-section-sub mb-12">
+                                Считать клиента «новым»,<br/> если по его номеру не было звонков:
+                            </div>
+
+                            <Select
+                                options={options}
+                                value={options.find(opt => opt.value === watch('newClientMonths'))}
+                                //@ts-ignore
+                                onChange={(selected) => setValue('newClientMonths', selected.value)}
+                                styles={defaultSelectStyles('100%')}
+                            />
+
+                            {errors.newClientMonths && (
+                                <div className="sms-error-text">{errors.newClientMonths.message}</div>
+                            )}
+                        </div>
+                    )}
+
                     {/* ✅ Показываем "Суточный лимит" только НЕ при "max" */}
                     {watchSendMode !== 'max' && (
                         <div className="sms-section">
-                            <div className="sms-section-title">Суточный лимит на SMS</div>
+                            <div className="sms-section-title">Суточный лимит на СМС</div>
                             <div className="sms-section-sub">
-                                Сумма, которая может быть потрачена на эту визитку из кошелька платформы...
+                                Сумма, которая может быть потрачена на эту визитку из кошелька платформы. При
+                                достижении
+                                лимита отправка визиток через СМС отключается
                             </div>
 
                             <input
                                 className={`sms-full-input ${errors.dailyLimit ? 'sms-input-error' : ''}`}
-                                placeholder="сумма в ₽"
-                                type="number"
+                                placeholder="Сумма в ₽"
                                 min="0"
                                 step="0.01"
                                 {...register('dailyLimit', {
-                                    required: 'Укажите суточный лимит',
-                                    min: { value: 0, message: 'Лимит не может быть отрицательным' },
-                                    pattern: { value: /^\d*\.?\d*$/, message: 'Введите корректную сумму' }
+                                    min: {value: 0, message: 'Лимит не может быть отрицательным'},
+                                    pattern: {value: /^\d*\.?\d*$/, message: 'Введите корректную сумму'}
                                 })}
                             />
+                            {/* Ошибка будет показываться только после попытки сабмита */}
                             {errors.dailyLimit && (
                                 <div className="sms-error-text">{errors.dailyLimit.message}</div>
                             )}
                         </div>
                     )}
 
+
+                    {type === 'apology' && (
+                        <RepeatInterval
+                            title="Защита от спама"
+                            description="Отправлять если ожидание на линии более"
+                            unit="сек"
+                            register={register}
+                            errors={errors}
+                            watch={watch}
+                            setValue={setValue}
+                            fieldName="wait_durat"
+                            //@ts-ignore
+                            min={1}
+                            max={60}
+                            minMessage="Минимальное значение - 1 секунда"
+                            maxMessage="Максимальное значение - 60 минут"
+                        />
+                    )}
+
+                    {/* ✅ Ошибка сервера отображается тут */}
+                    {errors.root?.serverError && (
+                        <div className="sms-error-text" style={{marginTop: '8px'}}>
+                            {errors.root.serverError.message}
+                        </div>
+                    )}
 
                     {/* кнопка добавить */}
                     <div className="sms-footer">
@@ -604,12 +1015,4 @@ export function SmsModal({
             </div>
         </div>
     )
-}
-
-function formatPhone(raw) {
-    const digits = raw.replace(/\D/g, '');
-    if (digits.length === 11 && digits.startsWith('7')) {
-        return `+7 ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 9)} ${digits.slice(9, 11)}`;
-    }
-    return raw;
 }

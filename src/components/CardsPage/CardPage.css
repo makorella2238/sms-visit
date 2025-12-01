@@ -121,9 +121,9 @@
 
 .tab.active {
   background-color: white;
-  color: #333;
+  color: #475569;
   height: 32px;
-  font-weight: bold;
+    font-weight: 500;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
@@ -145,13 +145,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .section-title {
   font-size: 18px;
   font-weight: bold;
-  color: #333;
+  color: #475569;
 }
 
 .section-actions {
@@ -164,12 +164,11 @@
   background-color: #006999;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px !important;
   padding: 8px 16px;
   font-size: 14px;
   cursor: pointer;
 }
-
 /* Карточки */
 .cards-container {
   display: flex;
@@ -182,7 +181,7 @@
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px;
+  padding: 12px;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
@@ -192,8 +191,10 @@
 }
 
 .card.inactive {
+  position: relative;
   background-color: transparent;
-  border: 1px dashed #adb5bd;
+  border-radius: 6px;
+  border: 2px dashed #adb5bd; /* толщина и цвет */
 }
 
 .card-left {
@@ -205,26 +206,78 @@
 
 
 .card-left-label {
+  font-width: 500;
   font-size: 14px;
-  color: #333;
+  line-height: 120%;
+  color: #64748B;
 }
 
-.bold {
-  font-weight: bold;
+.bold-color {
+  font-weight: 600;
 }
+
+.card.inactive .card-left-label {
+  color: #94A3BB;
+}
+
 
 .account, .limit {
   font-size: 12px;
   color: #666;
 }
-
 .card-center {
+  flex: 1;
+  max-width: 1050px;
+  min-width: 0;
+  padding: 0 20px;
+
+  display: flex;           /* делаем flex контейнер */
+  flex-direction: column;  /* текст сверху вниз */
+  justify-content: flex-start; /* привязываем к верху */
+  align-items: flex-start;     /* привязываем к левому краю */
+  text-align: left;
 }
 
 .description {
   font-size: 14px;
-  line-height: 1.5;
-  color: #333;
+  line-height: 1.4;
+
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  width: 100%; /* чтобы текст занимал всю ширину родителя */
+  color: #475569; /* обычный цвет текста */
+}
+
+/* Активные карточки — показываем текст полностью */
+.description.active {
+  display: block;
+  max-height: none;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  color: #475569; /* обычный цвет */
+}
+
+/* Неактивные — ограничиваем 3 строками и меняем цвет */
+.description.inactive {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #94A3BB; /* серый цвет для неактивного */
+}
+
+
+.card-right {
+  flex: 0 0 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .card-right {
@@ -232,7 +285,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
 }
 
 .toggle-switch {
@@ -241,38 +294,43 @@
 }
 
 .switch {
-  width: 40px;
-  height: 20px;
-  border-radius: 10px;
+  width: 28px;
+  height: 12px;
+  border-radius: 6px;
   cursor: pointer;
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.25s ease;
 }
 
 .switch.on {
-  background-color: #007bff;
+  background-color: #00AFFF;
 }
 
 .switch.off {
-  background-color: #adb5bd;
+  background-color: #94A3BB;
 }
 
 .switch-handle {
   width: 16px;
   height: 16px;
   background-color: white;
+  border: 1px solid #00AFFF;
   border-radius: 50%;
   position: absolute;
-  top: 2px;
-  transition: transform 0.3s ease;
+  top: -2px;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
 }
 
 .switch.on .switch-handle {
-  transform: translateX(22px);
+  transform: translateX(12px);
+  border-color: #00AFFF;
 }
 
 .switch.off .switch-handle {
-  transform: translateX(2px);
+  transform: translateX(0);
+  border-color: #94A3BB;
 }
 
 .icon {
@@ -312,7 +370,6 @@
   object-fit: contain;
 }
 
-
 .collapse-button {
   width: 24px;
   height: 24px;
@@ -322,13 +379,22 @@
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  transition: transform 0.3s ease;
+}
+
+.collapse-button:hover {
+  transform: scale(1.1);
 }
 
 .collapse-icon {
   width: 32px !important;
   height: 32px !important;
-  object-fit: contain;       /* чтобы SVG не растягивался криво */
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.collapse-icon.expanded {
+  transform: rotate(0deg);
 }
 
 .collapse-icon.collapsed {
@@ -350,5 +416,3 @@
   width: 16px;
   height: 16px;
 }
-
-/* Остальные существующие стили остаются без изменений */

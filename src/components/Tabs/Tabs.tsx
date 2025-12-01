@@ -6,6 +6,8 @@ interface TabsProps {
     setActiveTab: (tab: string) => void;
 }
 
+
+
 export const Tabs: React.FC<TabsProps> = ({ activeTab, setActiveTab }) => {
     return (
         <div className="tabs-container">

@@ -1,4 +1,3 @@
-import React from "react";
 import "./Header.css";
 
 const Header = () => {
@@ -7,7 +6,7 @@ const Header = () => {
             <div className="header-left">
                 <h1 className="title">СМС-визитка</h1>
                 <div className="help-icon">
-                    <img src="/question.svg" alt="Помощь" />
+                    <img src="/header-question.svg" alt="Помощь" />
                 </div>
             </div>
 

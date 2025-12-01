@@ -1,7 +1,38 @@
 .app {
     margin-left: 120px;
     margin-top: 20px;
-    max-width: 1620px;
+    max-width: 1395px;
     padding: 0 15px; /* Добавляем отступы по бокам для мобильных устройств */
     box-sizing: border-box;
+    color:#475569;
+}
+
+.reminder-banner {
+    height: 48px;
+    background-color: #d8e8ef;
+    border-top: 3px solid #6BA8C4;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-text {
+    padding: 3px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    color: #475569;
+}
+
+.icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

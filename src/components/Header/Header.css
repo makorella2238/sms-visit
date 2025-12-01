@@ -6,8 +6,7 @@
 
 body {
     font-family: 'Manrope', sans-serif;
-    background-color: rgba(96, 154, 194, 0.35);
-    color: #333;
+    color: #475569;
 }
 
 .app {
@@ -126,9 +125,9 @@ body {
 
 .tab.active {
     background-color: white;
-    color: #333;
+    color: #475569;
     height: 32px;
-    font-weight: bold;
+    font-weight: 500;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
@@ -150,13 +149,14 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
 }
 
 .section-title {
-    font-size: 18px;
+    margin-left: 12px;
+    font-size: 16px;
     font-weight: bold;
-    color: #333;
+    color: #475569;
+
 }
 
 .section-actions {
@@ -186,7 +186,7 @@ body {
 .card {
     display: flex;
     gap: 20px;
-    padding: 20px;
+    padding: 14px;
     border-radius: 8px;
     transition: all 0.3s ease;
 }
@@ -197,7 +197,6 @@ body {
 
 .card.inactive {
     background-color: transparent;
-    border: 1px dashed #adb5bd;
 }
 
 .card-left {
@@ -210,7 +209,8 @@ body {
 
 .card-left-label {
     font-size: 14px;
-    color: #333;
+    color: #475569;
+
 }
 
 .bold {
@@ -228,81 +228,10 @@ body {
 .description {
     font-size: 14px;
     line-height: 1.5;
-    color: #333;
+    color: #475569;
+
 }
 
-.card-right {
-    flex: 0 0 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.toggle-switch {
-    display: flex;
-    align-items: center;
-}
-
-.switch {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    position: relative;
-    transition: background-color 0.3s ease;
-}
-
-.switch.on {
-    background-color: #007bff;
-}
-
-.switch.off {
-    background-color: #adb5bd;
-}
-
-.switch-handle {
-    width: 16px;
-    height: 16px;
-    background-color: white;
-    border-radius: 50%;
-    position: absolute;
-    top: 2px;
-    transition: transform 0.3s ease;
-}
-
-.switch.on .switch-handle {
-    transform: translateX(22px);
-}
-
-.switch.off .switch-handle {
-    transform: translateX(2px);
-}
-
-.icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.edit-icon {
-    color: #007bff;
-}
-
-.delete-icon {
-    color: #dc3545;
-}
-
-.empty-state {
-    text-align: center;
-    color: #666;
-    font-style: italic;
-    padding: 40px;
-}
 
 /* Добавьте эти стили в ваш CardPage.css */
 
