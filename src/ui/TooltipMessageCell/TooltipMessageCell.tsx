@@ -11,7 +11,7 @@ export const MessageCell: React.FC<MessageCellProps> = ({ message }) => {
     const [coords, setCoords] = useState({ x: 0, y: 0 });
 
     return (
-        <td
+        <div
             className="small-cell message-cell"
             onMouseEnter={e => {
                 setHover(true);
@@ -34,6 +34,6 @@ export const MessageCell: React.FC<MessageCellProps> = ({ message }) => {
                     </div>,
                     document.body
                 )}
-        </td>
+        </div>
     );
 };

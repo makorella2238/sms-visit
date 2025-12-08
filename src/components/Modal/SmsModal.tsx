@@ -20,6 +20,8 @@ interface UploadMediaResponse {
     media: SmsMaxMedia;
 }
 
+const DOUBLE_CHARS = new Set(['{','}','[',']','^','~','\\','|','€']);
+
 export function SmsModal({
                              type = 'new',
                              onClose,
@@ -212,33 +214,44 @@ export function SmsModal({
         clearErrors('selectedTags');
     };
 
-    const detectCharacterSet = (text: string) => /[а-яА-ЯёЁ]/.test(text) ? 'cyrillic' : 'latin';
+    const detectCharacterSet = (text: string): 'cyrillic' | 'latin' => {
+        // если есть хотя бы 1 кириллический символ — это кириллица
+        return /[а-яА-ЯёЁ]/.test(text) ? 'cyrillic' : 'latin';
+    };
 
     const calculateSmsStats = (text: string) => {
-        if (!text) return {charCount: 0, smsCount: 1, cost: 20, maxChars: 160, characterSet: 'latin'};
+        if (!text) {
+            return {
+                charCount: 0,
+                smsCount: 1,
+                maxChars: 160,
+                characterSet: 'latin',
+                isOverLimit: false
+            };
+        }
 
         const characterSet = detectCharacterSet(text);
+
         const maxCharsPerSms = characterSet === 'cyrillic' ? 70 : 160;
-        const costPerSms = 20;
+        const maxSms = characterSet === 'cyrillic' ? 14 : 6;
+        const maxTotalChars = maxCharsPerSms * maxSms;
 
-        // ПЕРВОНАЧАЛЬНЫЙ ПОДСЧЕТ (уже правильный)
-        const charCount = text.length;
-        const smsCount = Math.max(1, Math.ceil(charCount / maxCharsPerSms));
-        const cost = smsCount * costPerSms;
+        // считаем символы с учётом спецсимволов
+        let charCount = 0;
+        for (const ch of text) {
+            charCount += DOUBLE_CHARS.has(ch) ? 2 : 1;
+        }
 
-        // ДОПОЛНИТЕЛЬНО: подсчет специальных символов для отладки
-        const newlineCount = (text.match(/\n/g) || []).length;
-        const carriageReturnCount = (text.match(/\r/g) || []).length;
+        const smsCount = Math.ceil(charCount / maxCharsPerSms) || 1;
+        const isOverLimit = smsCount > maxSms;
 
         return {
             charCount,
             smsCount,
-            cost,
             maxChars: maxCharsPerSms,
             characterSet,
-            // для отладки:
-            newlineCount,
-            carriageReturnCount
+            isOverLimit,
+            maxTotalChars
         };
     };
 
@@ -362,19 +375,11 @@ export function SmsModal({
         }
 
         const max_account = (meth_sms && !meth_max) ? null : String(data.selectedAccount);
-        const parsedLimit = data.dailyLimit ? Number(data.dailyLimit) : null;
+
+        // limit_sum: если dailyLimit не заполнен → null, иначе число
+        const limit_sum = data.dailyLimit ? Number(data.dailyLimit) : null;
 
         const normalizedPhone = selectedTags[0].replace(/^\+/, "");
-
-        console.log("=== DEBUG name_id ===");
-        console.log("selectedTags:", selectedTags);
-        console.log("selectedTags[0]:", selectedTags[0]);
-        console.log("accountsPhones:", accountsPhones);
-        console.log(
-            "all numbers in groups:",
-            accountsPhones.flatMap(g => g.numbers)
-        );
-
 
         const selectedPhone = selectedTags[0];
 
@@ -387,40 +392,51 @@ export function SmsModal({
             return result;
         });
 
-        console.log("selectedGroup result:", selectedGroup);
-
-
         const nameId = selectedGroup?.name || null;
+
+        const smsStats = calculateSmsStats(data.message || "");
+
+        if (meth_sms && smsStats.isOverLimit) {
+            setError("message", {
+                type: "manual",
+                message:
+                    smsStats.characterSet === 'cyrillic'
+                        ? "Превышен лимит: максимум 14 SMS для кириллицы"
+                        : "Превышен лимит: максимум 6 SMS для латиницы"
+            });
+            return;
+        }
+
+        const smsCharCount = meth_sms
+            ? calculateSmsStats(data.message || "").charCount
+            : null;
+
 
         const body: any = {
             name_id: nameId,
             sms_type,
             avito_phone: normalizedPhone,
-            is_active: editData?.is_active,
+            is_active: editData?.is_active || true,
             new_buyer,
             not_send,
             meth_sms,
             meth_max,
             max_account,
-            num_of_char: smsStats.charCount,
-            limit_sum: parsedLimit,
-            limit_ost: parsedLimit,
-            wait_durat: data.wait_durat
+            limit_sum,
+            num_of_char: smsCharCount,
         };
 
+        if (sms_type === 2) {
+            body.wait_durat = data.wait_durat || 0;
+        }
 
         if (meth_sms) {
-            body.sms_text = data.message;
+            body.sms_text = data.message || "";
         } else {
             body.sms_text = null;
         }
 
-        if (meth_max) {
-            body.sms_max = data.maxMessage;
-        } else {
-            body.sms_max = null;
-        }
-
+        // Валидация текстов
         if (meth_sms && meth_max) {
             if (!data.message || !data.maxMessage) {
                 setError("root.serverError", {
@@ -450,7 +466,7 @@ export function SmsModal({
         try {
             let uploadedImages: SmsMaxMedia[] = [];
 
-            // Новые изображения
+            // Обработка изображений для Max
             if (meth_max && images.length > 0) {
                 uploadedImages = await Promise.all(
                     images.map(async (img) => {
@@ -477,6 +493,7 @@ export function SmsModal({
                 );
             }
 
+            // Формируем sms_max объект если используется Max
             if (meth_max) {
                 body.sms_max = {
                     text: data.maxMessage || "",
@@ -485,17 +502,21 @@ export function SmsModal({
                     files: []
                 };
             } else {
+                // Если Max не используется, передаем null
                 body.sms_max = null;
             }
 
+            console.log('Отправляемые данные:', JSON.stringify(body, null, 2));
+
             let response: Response;
 
-            console.log('body', body)
-
             if (editData) {
+                // Для обновления используем PUT с query параметрами
                 const updateUrl = new URL("https://smscard.b2b-help.ru/api/sms-cards/update");
                 updateUrl.searchParams.append("avito_phone", body.avito_phone);
                 updateUrl.searchParams.append("sms_type", String(body.sms_type));
+
+                console.log('Update URL:', updateUrl.toString());
 
                 response = await fetch(updateUrl.toString(), {
                     method: "PUT",
@@ -506,6 +527,7 @@ export function SmsModal({
                     body: JSON.stringify(body)
                 });
             } else {
+                // Для добавления используем POST
                 response = await fetch("https://smscard.b2b-help.ru/api/sms-cards/add", {
                     method: "POST",
                     headers: {
@@ -517,27 +539,43 @@ export function SmsModal({
             }
 
             const text = await response.text();
-            console.log("Raw response text:", text);
+            console.log("Raw response:", text);
+            console.log("Status:", response.status, response.statusText);
 
             if (!response.ok) {
                 let errorMsg = "Произошла неизвестная ошибка";
 
-                const match = text.match(/"error"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/);
-                if (match) {
-                    errorMsg = match[1];
-                    console.log("Extracted error message via regex:", errorMsg);
-                } else {
-                    console.log("Could not extract 'error' via regex, using raw text");
-                    errorMsg = text;
+                try {
+                    // Пытаемся распарсить JSON
+                    const json = JSON.parse(text);
+                    if (json.error) {
+                        errorMsg = json.error;
+                    } else if (json.message) {
+                        errorMsg = json.message;
+                    }
+                } catch {
+                    // Если не JSON, ищем ошибку в тексте
+                    const match = text.match(/"error"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/);
+                    if (match) {
+                        errorMsg = match[1];
+                    } else {
+                        errorMsg = text || "Ошибка сервера";
+                    }
                 }
 
-                console.log("Final error message to display:", errorMsg);
+                console.error("Ошибка сервера:", errorMsg);
                 setError("root.serverError", {type: "manual", message: errorMsg});
                 return;
             }
 
             console.log("Успешно:", text);
-            if (onSuccess) await onSuccess();
+
+            // Если есть callback успеха, вызываем его
+            if (onSuccess) {
+                await onSuccess();
+            }
+
+            // Закрываем модальное окно
             onClose();
 
         } catch (error) {

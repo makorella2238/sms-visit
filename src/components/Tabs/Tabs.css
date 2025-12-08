@@ -324,3 +324,41 @@ body {
     color: #333;
     font-weight: 500;
 }
+
+
+.reminder-banner {
+    width: 100%;
+    height: 40px;
+    background-color: #d8e8ef;
+    border-top: 3px solid #6BA8C4;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-text {
+    padding: 3px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    color: #475569;
+}
+
+.icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-block {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+}

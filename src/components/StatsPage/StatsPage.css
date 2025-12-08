@@ -70,6 +70,11 @@
     transition: color 0.3s ease;
 }
 
+.text-down {
+    font-weight: 500;
+    font-size: 12px;
+}
+
 .search-input:focus::placeholder {
     color: #6b7280;
 }
@@ -210,8 +215,8 @@
     box-shadow:
             0 10px 30px rgba(0, 0, 0, 0.1),
             0 1px 8px rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: none;
     overflow-x: auto; /* Добавить горизонтальный скролл */
 }
 
@@ -242,14 +247,14 @@
 }
 .sms-table td,
 .sms-table th {
-    height: auto;          /* автоматическая высота */
-    max-height: 40px;      /* ограничение по высоте */
-    line-height: 20px;     /* вертикальное центрирование однострочного текста */
-    overflow: hidden;      /* скрываем лишний текст */
+    height: auto;
+    max-height: 40px;
+    line-height: 17px;
+    overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;   /* предотвращаем перенос строки */
+    white-space: nowrap;
     vertical-align: middle;
-    padding: 0 12px;        /* можно подстроить под дизайн */
+    padding: 0 12px;
     box-sizing: border-box;
 }
 
@@ -259,11 +264,11 @@
 
 .sms-table {
     width: 100%;
-    border-collapse: collapse; /* важно для корректного отображения границ */
+    border-collapse: collapse;
 }
 
 .sms-table th {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #64748B;
     text-transform: lowercase;
@@ -287,11 +292,10 @@
 .sms-table th.sortable {
     display: flex;
     align-items: center;
-    justify-content: center;
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
-    gap: 8px;
+    gap: 5px;
 }
 
 .sms-table th.sortable span {
@@ -330,7 +334,7 @@
 .sms-table th.sortable:hover .sort-icon {
     opacity: 1;
     transform: scale(1.1);
-    visibility: visible; /* Показываем при ховере даже если неактивно */
+    visibility: visible;
 }
 
 
@@ -343,7 +347,7 @@
 }
 
 .sms-table tr.even {
-    background-color: #ffffff;
+    background-color: #f8fafc;
 }
 
 .sms-table tr.odd {
@@ -360,7 +364,6 @@
     color: #374151;
 }
 
-/* Стили статусов */
 .status {
     padding: 6px 12px;
     border-radius: 20px;
@@ -368,7 +371,15 @@
     font-weight: 600;
     text-transform: lowercase;
     transition: all 0.3s ease;
+
+    /* --- ДОБАВИТЬ ЭТО --- */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px; /* или нужная ширина */
+    display: inline-block; /* важно для ellipsis */
 }
+
 
 @media (max-width: 1200px) {
     .filters-row {
@@ -427,8 +438,11 @@
 
 .sms-table tr,
 .sms-table td {
-    overflow: visible; /* обязательно */
     position: relative; /* чтобы tooltip позиционировался относительно строки */
+}
+
+.sms-table {
+    border-collapse: collapse;
 }
 
 
@@ -501,14 +515,14 @@
 }
 
 
-.ad-title {
+.title-ob {
     font-weight: 500;
     font-size: 13px;
     line-height: 16px;
     color: #006999;
 }
 
-.ad-price {
+.price {
     font-family: Manrope, sans-serif;
     font-weight: 500;
     font-size: 11px;
@@ -522,29 +536,32 @@
     box-sizing: border-box; /* учитывает padding внутри общей ширины */
 }
 
-.ad-line {
+.line {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Центрирование ячейки с телефоном и стрелкой */
 .small-cell.flex-td {
     width: 200px;
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Расстояние между телефоном и стрелкой */
     padding: 12px;
 }
+
+.small-cell.flex-td .cell-inner {
+    margin-left: 30px;
+    align-items: center;
+    gap: 8px;
+}
+
 
 .text-flex-center {
     margin: 0 auto; /* авто отступы слева и справа */
 }
 .arr-right {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 13px;
+    right: 0px;
     height: 16px;
     width: 16px;
 }
@@ -552,4 +569,20 @@
 
 .ad-block.clickable {
     cursor: pointer;
+}
+
+.sms-table th:nth-child(5),
+.sms-table td:nth-child(5) {
+    min-width: 160px; /* исходное значение + 50px */
+    max-width: 200px; /* при необходимости ограничиваем */
+}
+.sms-table th:nth-child(10),
+.sms-table td:nth-child(10) {
+    min-width: 100px; /* исходное значение + 50px */
+    max-width: 120px; /* при необходимости ограничиваем */
+}
+.sms-table th:nth-child(5),
+.sms-table td:nth-child(5) {
+    min-width: 170px; /* исходное значение + 50px */
+    max-width: 170px; /* при необходимости ограничиваем */
 }

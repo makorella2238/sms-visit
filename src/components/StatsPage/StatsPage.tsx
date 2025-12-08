@@ -72,6 +72,84 @@ export const StatsPage: React.FC = () => {
 
     const {data, isLoading, error, refetch} = useSmsStatistsEl();
 
+    const filteredData = useMemo(() => {
+        const normalizedSearch = searchTerm.replace(/\D/g, '');
+        const today: Date = new Date();
+
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayString: string = yesterday.toDateString();
+
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+
+        const monthStart: Date = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        return statsData.filter(item => {
+            const itemDate: Date = new Date(item.originalData?.created_at);
+            const itemDateString: string = itemDate.toDateString();
+
+            // Фильтр по периоду
+            if (period !== 'all') {
+                if (period === 'today' && itemDateString !== today.toDateString()) return false;
+                if (period === 'yesterday' && itemDateString !== yesterdayString) return false;
+                if (period === 'week' && itemDate < weekAgo) return false;
+                if (period === 'month' && itemDate < monthStart) return false;
+            }
+
+            const buyerPhoneDigits: string = item.buyerPhone.replace(/\D/g, '');
+            const sellerPhoneDigits: string = item.sellerPhone.replace(/\D/g, '');
+            const accountLower: string = item.account.toLowerCase();
+
+            // Поиск по телефонам и аккаунту
+            if (normalizedSearch) {
+                if (!buyerPhoneDigits.includes(normalizedSearch) &&
+                    !sellerPhoneDigits.includes(normalizedSearch) &&
+                    !accountLower.includes(searchTerm.toLowerCase())) {
+                    return false;
+                }
+            }
+
+            // Фильтр по типу SMS
+            if (smsType !== 'all') {
+                if (smsType === 'visits' && item.smsType !== 'Визитка') return false;
+                if (smsType === 'apologies' && item.smsType !== 'Извинение') return false;
+            }
+
+            // Фильтр по статусу
+            if (status !== 'all') {
+                if (item.status !== status) return false;
+            }
+
+            return true;
+        });
+    }, [statsData, searchTerm, smsType, status, period]);
+
+    const sortedData = useMemo(() => {
+        console.log('[sortedData] До сортировки:', filteredData.map(d => d.date));
+        const result = [...filteredData].sort((a, b) => {
+            const dateA = new Date(a.originalData?.created_at);
+            const dateB = new Date(b.originalData?.created_at);
+
+            const diff = sortDirection === 'desc'
+                ? dateB.getTime() - dateA.getTime()
+                : dateA.getTime() - dateB.getTime();
+
+            console.log(`[sorting] ${a.originalData?.created_at} vs ${b.originalData?.created_at} = ${diff}`);
+            return diff;
+        });
+        console.log('[sortedData] После сортировки:', result.map(d => d.date));
+        return result;
+    }, [filteredData, sortField, sortDirection]);
+
+    console.log(sortedData)
+
+    useEffect(() => {
+        console.log('Table data:', sortedData);
+        console.log('Columns count:', document.querySelectorAll('.sms-table th').length);
+        console.log('First row cells count:', document.querySelectorAll('.sms-table tbody tr:first-child td').length);
+    }, [sortedData]);
+
     useEffect(() => {
         if (Array.isArray(data)) {
             //@ts-ignore
@@ -138,80 +216,6 @@ export const StatsPage: React.FC = () => {
         if (!methSms && methMax) return 'max';
         return 'не указано';
     };
-
-    // Фильтрация данных
-    const filteredData = useMemo(() => {
-        const normalizedSearch = searchTerm.replace(/\D/g, '');
-        const today: Date = new Date();
-
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayString: string = yesterday.toDateString();
-
-        const weekAgo = new Date(today);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-
-        const monthStart: Date = new Date(today.getFullYear(), today.getMonth(), 1);
-
-        return statsData.filter(item => {
-            const itemDate: Date = new Date(item.originalData?.created_at);
-            const itemDateString: string = itemDate.toDateString();
-
-            // Фильтр по периоду
-            if (period !== 'all') {
-                if (period === 'today' && itemDateString !== today.toDateString()) return false;
-                if (period === 'yesterday' && itemDateString !== yesterdayString) return false;
-                if (period === 'week' && itemDate < weekAgo) return false;
-                if (period === 'month' && itemDate < monthStart) return false;
-            }
-
-            const buyerPhoneDigits: string = item.buyerPhone.replace(/\D/g, '');
-            const sellerPhoneDigits: string = item.sellerPhone.replace(/\D/g, '');
-            const accountLower: string = item.account.toLowerCase();
-
-            // Поиск по телефонам и аккаунту
-            if (normalizedSearch) {
-                if (!buyerPhoneDigits.includes(normalizedSearch) &&
-                    !sellerPhoneDigits.includes(normalizedSearch) &&
-                    !accountLower.includes(searchTerm.toLowerCase())) {
-                    return false;
-                }
-            }
-
-            // Фильтр по типу SMS
-            if (smsType !== 'all') {
-                if (smsType === 'visits' && item.smsType !== 'Визитка') return false;
-                if (smsType === 'apologies' && item.smsType !== 'Извинение') return false;
-            }
-
-            // Фильтр по статусу
-            if (status !== 'all') {
-                if (item.status !== status) return false;
-            }
-
-            return true;
-        });
-    }, [statsData, searchTerm, smsType, status, period]);
-
-
-    const sortedData = useMemo(() => {
-        console.log('[sortedData] До сортировки:', filteredData.map(d => d.date));
-        const result = [...filteredData].sort((a, b) => {
-            const dateA = new Date(a.originalData?.created_at);
-            const dateB = new Date(b.originalData?.created_at);
-
-            const diff = sortDirection === 'desc'
-                ? dateB.getTime() - dateA.getTime()
-                : dateA.getTime() - dateB.getTime();
-
-            console.log(`[sorting] ${a.originalData?.created_at} vs ${b.originalData?.created_at} = ${diff}`);
-            return diff;
-        });
-        console.log('[sortedData] После сортировки:', result.map(d => d.date));
-        return result;
-    }, [filteredData, sortField, sortDirection]);
-
-    console.log(sortedData)
 
     const toggleSort = (field: SortField): void => {
         if (sortField === field) {
@@ -429,10 +433,10 @@ export const StatsPage: React.FC = () => {
                             <th>объявление</th>
                             <th>покупатель</th>
                             <th>продавец</th>
-                            <th className={'ad-line'}>смс-визитка</th>
+                            <th>статус</th>
+                            <th className='line'>смс-визитка</th>
                             <th>текст сообщения</th>
                             <th>канал</th>
-                            <th>статус</th>
                             <th onClick={() => toggleSort('cost')} className="sortable">
                                 <span>стоимость ₽</span>
                                 <img
@@ -449,35 +453,34 @@ export const StatsPage: React.FC = () => {
                                 <td className="small-cell">{row.date}</td>
                                 <td className="small-cell">{row.fio}</td>
                                 <td className="small-cell">{row.account}</td>
-                                <td className="ad-cell">
+                                <td className="cell">
                                     <div
-                                        className={`ad-block ${row.adUrl && row.adUrl !== '#' ? 'clickable' : ''}`}
-                                        onClick={() => {
-                                            if (row.adUrl && row.adUrl !== '#') {
-                                                window.open(row.adUrl, "_blank");
-                                            }
-                                        }}
                                     >
-                                        <div className="ad-title">{row.adTitle}</div>
-                                        <div className="ad-price ad-line">{row.adPrice}</div>
+                                        <div className="title-ob">{row.adTitle}</div>
+                                        <div className="price line">{row.adPrice}</div>
                                     </div>
                                 </td>
 
-                                <td className="small-cell flex-td">
+                                <td className="small-cell flex-td"
+                                    style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                                     <span className='text-flex-center'>{row.buyerPhone}</span>
                                     <img className='arr-right' src="/arr-right.svg" alt="arr-right.svg"/>
                                 </td>
+
                                 <td className="small-cell">{row.sellerPhone}</td>
+                                <td className="big-cell">
+                                <span className={`status status-${row.status.replace(/\s+/g, '-')}`}>
+                                    {row.status}
+                                </span>
+                                </td>
                                 <td className="small-cell">{row.smsType}</td>
 
-                                <MessageCell message={row.message}/>
+                                <td className="small-cell">
+                                    <MessageCell message={row.message}/>
+                                </td>
 
                                 <td className="big-cell">{row.sent}</td>
-                                <td className="big-cell">
-                        <span className={`status status-${row.status.replace(/\s+/g, '-')}`}>
-                            {row.status}
-                        </span>
-                                </td>
+
                                 <td className="big-cell">{row.cost}</td>
                             </tr>
                         ))}
