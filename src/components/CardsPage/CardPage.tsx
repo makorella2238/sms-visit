@@ -6,6 +6,7 @@ import {useSmsCardsEl} from "../../api/queries/smsCards/smsCards.tsx";
 
 // Тип данных, которые приходят с сервера
 interface ServerItem {
+    wait_durat: number;
     id: number;
     is_active?: boolean;
     avito_phone: string;
@@ -129,6 +130,7 @@ export const CardsPage: React.FC = () => {
                 )
             );
 
+            console.log('cardToUpdate', cardToUpdate)
 
             const normalizedPhone = cardToUpdate.avito_phone.replace(/^\+/, '');
 
@@ -136,17 +138,18 @@ export const CardsPage: React.FC = () => {
             updateUrl.searchParams.append('avito_phone', normalizedPhone);
             updateUrl.searchParams.append('sms_type', cardToUpdate.sms_type.toString());
 
-            // Отправляем запрос на обновление на сервер (в фоне)
-            const res = await fetch(updateUrl.toString(), {
+            const res = await fetch(updateUrl, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getTokenFromCookies()}`
                 },
                 body: JSON.stringify({
+                    wait_durat: cardToUpdate.wait_durat, // ✅ В BODY
                     is_active: newActiveState
                 })
             });
+
 
             if (!res.ok) {
                 const errorText = await res.text();
@@ -370,13 +373,14 @@ export const CardsPage: React.FC = () => {
             {isModalOpen && (
                 <SmsModal
                     //@ts-ignore
-                    type={modalType}
+                    modalType={modalType}
+                    type={editCardData?.id ? 'edit' : 'new'}
                     onClose={() => setIsModalOpen(false)}
                     //@ts-ignore
                     onSuccess={refetch}
                     //@ts-ignore
                     editData={editCardData}
-                />
+                 />
             )}
         </div>
     );

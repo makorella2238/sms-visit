@@ -25,6 +25,7 @@ const DOUBLE_CHARS = new Set(['{','}','[',']','^','~','\\','|','€']);
 export function SmsModal({
                              type = 'new',
                              onClose,
+                             modalType,
                              editData = null,
                              onSuccess
                          }: SmsModalProps) {
@@ -87,12 +88,13 @@ export function SmsModal({
         refetch: fetchMaxAccounts
     } = useMaxAccounts();
 
-    // Используем React Query для номеров аккаунтов
+    const smsType = modalType === 'new' ? 1 : 2;
+
     const {
         data: accountsData,
         isLoading: loadingAccounts,
         refetch: fetchAccounts
-    } = useAccountsPhones();
+    } = useAccountsPhones(smsType, false);
 
     // Преобразуем данные в формат для Select
     const maxAccounts = useMemo(() => {
@@ -106,28 +108,40 @@ export function SmsModal({
         return [{value: "", label: "Не выбран"}, ...options];
     }, [maxAccountsData]);
 
-    // Обрабатываем данные номеров при их получении
     useEffect(() => {
         if (accountsData) {
-            const list: Array<{ sellerPhone: string; account_name: string }> = accountsData;
+            const list: Array<{
+                already_exists: boolean;
+                sellerPhone: string;
+                account_name: string
+            }> = accountsData;
 
+            // Правильная группировка по аккаунтам
             const transformed = list.reduce((acc: AccountPhonesGroup[], item) => {
-                const phone = item.sellerPhone.replace(/^\+/, "");
-                const name = item.account_name || "Без имени";
+                const phone = item.sellerPhone.replace(/\D/g, '');
+                const name = item.account_name || 'Без имени';
 
-                const existing = acc.find(el => el.name === name);
-                if (existing) {
-                    const uniqueNumbers = [...new Set([...existing.numbers, phone])];
-                    existing.numbers = uniqueNumbers;
-                } else {
-                    acc.push({
+                let existingGroup = acc.find(a => a.name === name);
+
+                if (!existingGroup) {
+                    existingGroup = {
                         id: name,
                         name,
-                        numbers: [phone],
+                        numbers: [],
                         open: false,
                         addPhoneMode: false
+                    };
+                    acc.push(existingGroup);
+                }
+
+                // Добавляем номер, если его еще нет
+                if (!existingGroup.numbers.some(n => n.phone === phone)) {
+                    existingGroup.numbers.push({
+                        phone,
+                        already_exists: item.already_exists
                     });
                 }
+
                 return acc;
             }, []);
 
@@ -167,9 +181,14 @@ export function SmsModal({
     }, [editData, setValue]);
 
     const allUniqueNumbers = useMemo(() =>
-            [...new Set(accountsPhones.flatMap(a => a.numbers))],
+            [...new Set(
+                accountsPhones.flatMap(a =>
+                    a.numbers.map(n => n.phone)
+                )
+            )],
         [accountsPhones]
     );
+
 
     const handleAllNumbersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
@@ -199,15 +218,32 @@ export function SmsModal({
     };
 
     const handleSelectNumber = (value: string) => {
-        if (!selectedTags.includes(value)) {
-            const updated = [...selectedTags, value];
-            setSelectedTags(updated);
-            setValue("selectedTags", updated);
+        if (type === 'edit') {
+            setSelectedTags([value]);
+            setValue("selectedTags", [value]);
             clearErrors('selectedTags');
+            return;
         }
+
+        let updated: string[];
+
+        if (selectedTags.includes(value)) {
+            // 🔥 снимаем галочку
+            updated = selectedTags.filter(v => v !== value);
+        } else {
+            // 🔥 ставим галочку
+            updated = [...selectedTags, value];
+        }
+
+        setSelectedTags(updated);
+        setValue("selectedTags", updated);
+        clearErrors('selectedTags');
     };
 
     const handleRemoveTag = (number: string) => {
+        console.log(type, 'type')
+        if (type === 'edit') return; // 🚫 запрещаем удаление
+
         const updated = selectedTags.filter(n => n !== number);
         setSelectedTags(updated);
         setValue("selectedTags", updated);
@@ -280,7 +316,7 @@ export function SmsModal({
             return;
         }
 
-        const initialTag = editData.avito_phone?.replace(/\D/g, '') || '';
+        const initialTag = getEditPhone() || '';
 
         const mode: 'smart' | 'sms' | 'max' =
             editData.meth_sms && editData.meth_max ? 'smart' :
@@ -315,6 +351,7 @@ export function SmsModal({
 
         setSelectedTags(initialTag ? [initialTag] : []);
     }, [editData, reset]);
+
 
     async function uploadMediaToS3(file: File | SmsMaxMedia): Promise<SmsMaxMedia> {
         // Если это уже SmsMaxMedia (старое изображение), возвращаем как есть
@@ -357,7 +394,8 @@ export function SmsModal({
             return;
         }
 
-        const sms_type = type === "new" ? 1 : 2;
+        const sms_type = modalType == "new" ? 1 : 2;
+        console.log(sms_type)
         const new_buyer = sms_type === 1 ? Number(data.newClientMonths || 1) : null;
         const not_send = sms_type === 2 ? Number(data.repeatMinutes || 60) : null;
 
@@ -376,21 +414,13 @@ export function SmsModal({
 
         const max_account = (meth_sms && !meth_max) ? null : String(data.selectedAccount);
 
-        // limit_sum: если dailyLimit не заполнен → null, иначе число
         const limit_sum = data.dailyLimit ? Number(data.dailyLimit) : null;
-
-        const normalizedPhone = selectedTags[0].replace(/^\+/, "");
 
         const selectedPhone = selectedTags[0];
 
-        const selectedGroup = accountsPhones.find(group => {
-            const result = group.numbers.includes(selectedPhone);
-            console.log(
-                `Checking group "${group.name}" numbers=${JSON.stringify(group.numbers)} ` +
-                `against phone=${selectedPhone} => ${result}`
-            );
-            return result;
-        });
+        const selectedGroup = accountsPhones.find(group =>
+            group.numbers.some(n => n.phone === selectedPhone)
+        );
 
         const nameId = selectedGroup?.name || null;
 
@@ -411,12 +441,21 @@ export function SmsModal({
             ? calculateSmsStats(data.message || "").charCount
             : null;
 
+        const cards = selectedTags.map(phone => {
+            const group = accountsPhones.find(g =>
+                g.numbers.some(n => n.phone === phone)
+            );
+
+            return {
+                name_id: group?.name ?? null,
+                avito_phone: phone
+            };
+        });
+
 
         const body: any = {
-            name_id: nameId,
             sms_type,
-            avito_phone: normalizedPhone,
-            is_active: editData?.is_active || true,
+            is_active: editData?.is_active ?? true,
             new_buyer,
             not_send,
             meth_sms,
@@ -425,6 +464,13 @@ export function SmsModal({
             limit_sum,
             num_of_char: smsCharCount,
         };
+
+        if (type === 'new') {
+            body.cards = cards;
+        } else {
+            body.avito_phone = selectedTags[0];
+            body.name_id = nameId;
+        }
 
         if (sms_type === 2) {
             body.wait_durat = data.wait_durat || 0;
@@ -570,12 +616,10 @@ export function SmsModal({
 
             console.log("Успешно:", text);
 
-            // Если есть callback успеха, вызываем его
             if (onSuccess) {
                 await onSuccess();
             }
 
-            // Закрываем модальное окно
             onClose();
 
         } catch (error) {
@@ -584,10 +628,36 @@ export function SmsModal({
         }
     };
 
+    const getEditPhone = (): string | null => {
+        const phone = editData?.avito_phone;
+        if (!phone) return null;
+
+        if (Array.isArray(phone)) {
+            return phone[0]?.replace(/\D/g, '') ?? null;
+        }
+
+        if (typeof phone === 'string') {
+            return phone.replace(/\D/g, '');
+        }
+
+        return null;
+    };
+
+    const editPhone = getEditPhone();
+
+    const isPhoneDisabled = (phone: string, already_exists: boolean) => {
+        if (!already_exists) return false;
+
+        if (type === 'edit') {
+            return phone !== editPhone;
+        }
+
+        return true;
+    };
+
     return (
         <div className="sms-modal-overlay" role="dialog" aria-modal="true" onClick={handleOverlayClick}>
 
-            {/* Крестик для закрытия */}
             <div
                 className="close-button"
                 onClick={onClose}
@@ -600,15 +670,11 @@ export function SmsModal({
 
 
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                    {/* header */}
                     <div className="sms-modal-header">
-                        {/*<div className="sms-modal-back-btn" onClick={onClose} title="Закрыть">*/}
-                        {/*    <img src="/arr_buttons.svg" alt=""/>*/}
-                        {/*</div>*/}
                         <div className="sms-modal-title-block">
                             <div className="sms-modal-title">СМС визитка</div>
                             <div className="sms-modal-subtitle">
-                                {type === 'new'
+                                {modalType === 'new'
                                     ? 'Добавление СМС-визитки новым клиентам'
                                     : 'Добавление СМС-извинения после пропущенного звонка'}
                             </div>
@@ -617,11 +683,11 @@ export function SmsModal({
 
                     <div className="sms-modal-divider"/>
 
-                    {/*Выберите номер - НОВАЯ СТРУКТУРА */}
+                    {/*Выберите номер */}
                     <div className="sms-section-select">
                         <div className="sms-section-title">Выберите номера</div>
                         <div className="sms-section-sub">
-                            {type === 'new'
+                            {modalType === 'new'
                                 ? 'Мы отправим СМС-визитку после успешного звонка на этот номер'
                                 : 'В случае пропущенного звонка на этот номер звонящему будет отправлено СМС-извинение. Извинение будет отправлено в рабочее время, настроенное для номера'}
                         </div>
@@ -644,14 +710,16 @@ export function SmsModal({
                                 ) : (
                                     <>
                                         {/* Все номера */}
-                                        <label className="all-numbers-row">
-                                            <input
-                                                type="checkbox"
-                                                checked={isAllNumbersSelected}
-                                                onChange={handleAllNumbersChange}
-                                            />
-                                            <span>Все номера</span>
-                                        </label>
+                                        {type === 'new' && (
+                                            <label className="all-numbers-row">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isAllNumbersSelected}
+                                                    onChange={handleAllNumbersChange}
+                                                />
+                                                <span>Все номера</span>
+                                            </label>
+                                        )}
 
                                         {/* Аккаунты */}
                                         {accountsPhones.map((account: AccountPhonesGroup) => (
@@ -680,27 +748,43 @@ export function SmsModal({
                                                     </div>
                                                 </div>
 
-                                                {account.open && (
-                                                    <div className="numbers-list">
-                                                        {account.numbers.map((num: string) => (
-                                                            <label key={num} className="number-row">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={selectedTags.includes(num)}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) {
-                                                                            handleSelectNumber(num);
-                                                                        } else {
-                                                                            handleRemoveTag(num);
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                <span
-                                                                    className="number-text">{formatPhoneDisplay(num)}</span>
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                {account.open && account.numbers.map(({ phone, already_exists }) => {
+                                                    const disabled = isPhoneDisabled(phone, already_exists);
+
+                                                    return (
+                                                        <label
+                                                            key={phone}
+                                                            className={`number-row ${disabled ? 'disabled' : ''}`}
+                                                        >
+                                                            <input
+                                                                type={'checkbox'}
+                                                                name={type === 'edit' ? 'edit-phone' : undefined}
+                                                                disabled={disabled}
+                                                                checked={selectedTags.includes(phone)}
+                                                                onChange={() => {
+                                                                    if (disabled) return;
+
+                                                                    if (type === 'edit') {
+                                                                        setSelectedTags([phone]);
+                                                                        setValue('selectedTags', [phone]);
+                                                                    } else {
+                                                                        handleSelectNumber(phone);
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <span className="number-text">
+                                                                {formatPhoneDisplay(phone)}
+                                                            </span>
+
+                                                            {already_exists && (
+                                                                <span className="number-exists">
+                                                                    {" "}уже добавлен
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                    );
+                                                })}
+
                                             </div>
                                         ))}
                                     </>
@@ -883,7 +967,7 @@ export function SmsModal({
                         </div>
                     )}
 
-                    {type === 'apology' && (
+                    {type === 'edit' && (
                         <RepeatInterval
                             title="Повторная отправка"
                             description="Не отправлять визитку повторно на тот же номер в течение"
@@ -1042,7 +1126,7 @@ export function SmsModal({
                     )}
 
 
-                    {type === 'apology' && (
+                    {type === 'edit' && (
                         <RepeatInterval
                             title="Защита от спама"
                             description="Отправлять если ожидание на линии более"

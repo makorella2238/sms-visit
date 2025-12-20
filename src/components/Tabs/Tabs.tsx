@@ -27,8 +27,6 @@ export const Tabs: React.FC<TabsProps> = ({ activeTab, setActiveTab }) => {
                         Статистика
                     </button>
                 </div>
-
-
             </div>
             <div className="reminder-banner">
                 <div className="icon-wrapper">

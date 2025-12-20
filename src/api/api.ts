@@ -25,11 +25,11 @@ interface MaxAccountsResponse {
     data: MaxAccount[];
 }
 
-interface AccountsPhone {
+export interface AccountsPhone {
     sellerPhone: string;
     account_name: string;
+    already_exists: boolean;
 }
-
 interface AccountsResponse {
     success: boolean;
     output: string;
@@ -66,8 +66,11 @@ export const smsModal = {
         return response.data.data;
     },
 
-    async getAccountsPhones(): Promise<AccountsPhone[]> {
-        const response = await api.post<AccountsResponse>("/avito_seller_phone");
+    async getAccountsPhones(sms_type: number): Promise<AccountsPhone[]> {
+        const response = await api.post<AccountsResponse>(
+            `/avito_seller_phone?sms_type=${sms_type}`,
+            {}
+        );
 
         if (!response.data.success || !response.data.output) {
             throw new Error("Не удалось загрузить номера");
@@ -75,6 +78,7 @@ export const smsModal = {
 
         return JSON.parse(response.data.output);
     },
+
 
     /** ------------------------- НОВЫЕ API ---------------------------- */
 

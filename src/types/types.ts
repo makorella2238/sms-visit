@@ -40,16 +40,22 @@ export interface EditData {
     max_account_name?: string;
 }
 
+interface AccountPhoneItem {
+    phone: string;
+    already_exists: boolean;
+}
+
 export interface AccountPhonesGroup {
     id: string;
     name: string;
-    numbers: string[];
+    numbers: AccountPhoneItem[];
     open: boolean;
     addPhoneMode: boolean;
 }
 
 export interface SmsModalProps {
-    type?: 'new' | 'apology';
+    type?: 'new' | 'edit';
+    modalType: 'new' | 'apology'
     onClose: () => void;
     editData?: EditData | null;
     //@ts-ignore

@@ -19,12 +19,15 @@ export const useMaxAccounts = () => {
     });
 };
 
-export const useAccountsPhones = (enabled: boolean = false) => {
+export const useAccountsPhones = (
+    sms_type: number,
+    enabled = false
+) => {
     return useQuery({
-        queryKey: ["accounts-phones"],
-        queryFn: smsModal.getAccountsPhones,
-        staleTime: 1000 * 60 * 5, // кеш 5 минут
+        queryKey: ["accounts-phones", sms_type],
+        queryFn: () => smsModal.getAccountsPhones(sms_type),
+        staleTime: 1000 * 60 * 5,
         retry: 1,
         enabled
     });
-}
+};

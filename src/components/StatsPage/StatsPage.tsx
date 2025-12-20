@@ -470,7 +470,7 @@ export const StatsPage: React.FC = () => {
                                 <td className="small-cell">{row.sellerPhone}</td>
                                 <td className="big-cell">
                                 <span className={`status status-${row.status.replace(/\s+/g, '-')}`}>
-                                    {row.status}
+                                  <MessageCell message={row.status}/>
                                 </span>
                                 </td>
                                 <td className="small-cell">{row.smsType}</td>

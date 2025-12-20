@@ -841,8 +841,16 @@ input {
 }
 
 .number-row {
+    margin-top: 5px;
     display: flex;
     align-items: center;
+}
+
+.number-exists {
+    font-size: 12px;
+    color: #999;
+    margin-left: 8px;
+    font-style: italic;
 }
 
 /* Нижняя панель кнопок */
