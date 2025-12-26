@@ -1,33 +1,34 @@
 import React from "react";
+import {useNavigate, useMatchRoute} from "@tanstack/react-router";
 import "./Tabs.css";
 
-interface TabsProps {
-    activeTab: string;
-    setActiveTab: (tab: string) => void;
-}
+export const Tabs: React.FC = () => {
+    const navigate = useNavigate();
+    const matchRoute = useMatchRoute();
 
+    const isStat = matchRoute({to: "/stat"});
 
-
-export const Tabs: React.FC<TabsProps> = ({ activeTab, setActiveTab }) => {
     return (
-        <div className='row-block'>
+        <div className="row-block">
             <div className="tabs-container">
                 <div className="tabs">
                     <button
-                        className={`tab ${activeTab === "визитки" ? "active" : ""}`}
-                        onClick={() => setActiveTab("визитки")}
+                        className={`tab ${!isStat ? "active" : ""}`}
+                        onClick={() => navigate({to: "/"})}
                     >
                         Визитки
                     </button>
 
                     <button
-                        className={`tab ${activeTab === "статистика" ? "active" : ""}`}
-                        onClick={() => setActiveTab("статистика")}
+                        className={`tab ${isStat ? "active" : ""}`}
+                        onClick={() => navigate({to: "/stat?page=1"})}
                     >
                         Статистика
                     </button>
                 </div>
             </div>
+
+
             <div className="reminder-banner">
                 <div className="icon-wrapper">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

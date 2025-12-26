@@ -145,7 +145,6 @@ export const CardsPage: React.FC = () => {
                     'Authorization': `Bearer ${getTokenFromCookies()}`
                 },
                 body: JSON.stringify({
-                    wait_durat: cardToUpdate.wait_durat, // ✅ В BODY
                     is_active: newActiveState
                 })
             });

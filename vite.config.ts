@@ -1,13 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
 
 export default defineConfig({
-  base: '/', // <- важно для развертывания в корне домена
+  base: '/',
   plugins: [
     react({
       babel: {
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
+    TanStackRouterVite(),
   ],
 })

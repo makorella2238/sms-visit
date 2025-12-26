@@ -1,0 +1,53 @@
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 20px 0;
+}
+
+.page-btn,
+.nav-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #70abc5;
+    background-color: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #006999;
+    transition: all 0.3s ease;
+}
+
+.nav-btn {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.page-btn:hover,
+.nav-btn:hover {
+    background-color: rgba(0, 105, 153, 0.1);
+}
+
+/* Стиль для активной цифровой кнопки */
+.page-btn.active {
+    background-color: #006999; /* Синий цвет */
+    color: white; /* Белый текст */
+    font-weight: bold;
+    border-color: #006999;
+}
+
+/* Для отключенных кнопок навигации */
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nav-btn:disabled:hover {
+    background-color: transparent;
+}

@@ -9,6 +9,7 @@ import {CostTooltip} from "../../ui/CostTooltip/CostTooltip.tsx";
 import {ImageUpload} from "../../ui/ImageUpload/ImageUpload.tsx";
 import {useAccountsPhones, useMaxAccounts} from "../../api/queries/smsModal/smsModal.ts";
 import {RepeatInterval} from "../../ui/RepeatInterval/RepeatInterval.tsx";
+import {calculateSmsStats} from "../../utils/sms.ts";
 
 interface MaxAccount {
     id: number;
@@ -19,8 +20,6 @@ interface UploadMediaResponse {
     success: boolean;
     media: SmsMaxMedia;
 }
-
-const DOUBLE_CHARS = new Set(['{','}','[',']','^','~','\\','|','€']);
 
 export function SmsModal({
                              type = 'new',
@@ -36,6 +35,36 @@ export function SmsModal({
     const [showTooltip, setShowTooltip] = useState(false);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [accountsPhones, setAccountsPhones] = useState<AccountPhonesGroup[]>([]);
+
+    const getEditPhone = (): string | null => {
+        const phone = editData?.avito_phone;
+        if (!phone) return null;
+
+        if (Array.isArray(phone)) {
+            return phone[0]?.replace(/\D/g, '') ?? null;
+        }
+
+        if (typeof phone === 'string') {
+            return phone.replace(/\D/g, '');
+        }
+
+        return null;
+    };
+
+    const initialTag = getEditPhone() || '';
+
+    const editPhone = getEditPhone();
+
+    const isPhoneDisabled = (phone: string, already_exists: boolean) => {
+        if (!already_exists) return false;
+
+        if (type === 'edit') {
+            return phone !== editPhone;
+        }
+
+        return true;
+    };
+
 
     const [images, setImages] = useState<ImageFile[]>(editData?.sms_max?.images?.map(img => ({
         id: Math.random().toString(36).substr(2, 9),
@@ -81,6 +110,7 @@ export function SmsModal({
     const watchMaxMessage = watch('maxMessage');
     const watchSendMode = watch('sendMode');
 
+
     // Используем React Query для аккаунтов Max
     const {
         data: maxAccountsData,
@@ -94,7 +124,12 @@ export function SmsModal({
         data: accountsData,
         isLoading: loadingAccounts,
         refetch: fetchAccounts
-    } = useAccountsPhones(smsType, false);
+    } = useAccountsPhones({
+        sms_type: smsType,
+        type,
+        current_phone: type === 'edit' ? editPhone : null,
+        enabled: false
+    });
 
     // Преобразуем данные в формат для Select
     const maxAccounts = useMemo(() => {
@@ -218,13 +253,6 @@ export function SmsModal({
     };
 
     const handleSelectNumber = (value: string) => {
-        if (type === 'edit') {
-            setSelectedTags([value]);
-            setValue("selectedTags", [value]);
-            clearErrors('selectedTags');
-            return;
-        }
-
         let updated: string[];
 
         if (selectedTags.includes(value)) {
@@ -241,54 +269,10 @@ export function SmsModal({
     };
 
     const handleRemoveTag = (number: string) => {
-        console.log(type, 'type')
-        if (type === 'edit') return; // 🚫 запрещаем удаление
-
         const updated = selectedTags.filter(n => n !== number);
         setSelectedTags(updated);
         setValue("selectedTags", updated);
         clearErrors('selectedTags');
-    };
-
-    const detectCharacterSet = (text: string): 'cyrillic' | 'latin' => {
-        // если есть хотя бы 1 кириллический символ — это кириллица
-        return /[а-яА-ЯёЁ]/.test(text) ? 'cyrillic' : 'latin';
-    };
-
-    const calculateSmsStats = (text: string) => {
-        if (!text) {
-            return {
-                charCount: 0,
-                smsCount: 1,
-                maxChars: 160,
-                characterSet: 'latin',
-                isOverLimit: false
-            };
-        }
-
-        const characterSet = detectCharacterSet(text);
-
-        const maxCharsPerSms = characterSet === 'cyrillic' ? 70 : 160;
-        const maxSms = characterSet === 'cyrillic' ? 14 : 6;
-        const maxTotalChars = maxCharsPerSms * maxSms;
-
-        // считаем символы с учётом спецсимволов
-        let charCount = 0;
-        for (const ch of text) {
-            charCount += DOUBLE_CHARS.has(ch) ? 2 : 1;
-        }
-
-        const smsCount = Math.ceil(charCount / maxCharsPerSms) || 1;
-        const isOverLimit = smsCount > maxSms;
-
-        return {
-            charCount,
-            smsCount,
-            maxChars: maxCharsPerSms,
-            characterSet,
-            isOverLimit,
-            maxTotalChars
-        };
     };
 
     const smsStats = useMemo(() => calculateSmsStats(watchMessage), [watchMessage]);
@@ -315,8 +299,6 @@ export function SmsModal({
             setSelectedAccountValue({value: '', label: 'Не выбран'});
             return;
         }
-
-        const initialTag = getEditPhone() || '';
 
         const mode: 'smart' | 'sms' | 'max' =
             editData.meth_sms && editData.meth_max ? 'smart' :
@@ -416,14 +398,6 @@ export function SmsModal({
 
         const limit_sum = data.dailyLimit ? Number(data.dailyLimit) : null;
 
-        const selectedPhone = selectedTags[0];
-
-        const selectedGroup = accountsPhones.find(group =>
-            group.numbers.some(n => n.phone === selectedPhone)
-        );
-
-        const nameId = selectedGroup?.name || null;
-
         const smsStats = calculateSmsStats(data.message || "");
 
         if (meth_sms && smsStats.isOverLimit) {
@@ -440,6 +414,15 @@ export function SmsModal({
         const smsCharCount = meth_sms
             ? calculateSmsStats(data.message || "").charCount
             : null;
+
+        const delete_original =
+            type === 'edit' && editData
+                ? {
+                    avito_phone: getEditPhone(), // старый номер
+                    sms_type
+                }
+                : undefined;
+
 
         const cards = selectedTags.map(phone => {
             const group = accountsPhones.find(g =>
@@ -463,13 +446,11 @@ export function SmsModal({
             max_account,
             limit_sum,
             num_of_char: smsCharCount,
+            cards,
         };
 
-        if (type === 'new') {
-            body.cards = cards;
-        } else {
-            body.avito_phone = selectedTags[0];
-            body.name_id = nameId;
+        if (type === 'edit' && delete_original) {
+            body.delete_original = delete_original;
         }
 
         if (sms_type === 2) {
@@ -559,8 +540,6 @@ export function SmsModal({
             if (editData) {
                 // Для обновления используем PUT с query параметрами
                 const updateUrl = new URL("https://smscard.b2b-help.ru/api/sms-cards/update");
-                updateUrl.searchParams.append("avito_phone", body.avito_phone);
-                updateUrl.searchParams.append("sms_type", String(body.sms_type));
 
                 console.log('Update URL:', updateUrl.toString());
 
@@ -626,33 +605,6 @@ export function SmsModal({
             console.error("Ошибка сети:", error);
             setError("root.serverError", {type: "manual", message: "Ошибка сети. Проверьте соединение."});
         }
-    };
-
-    const getEditPhone = (): string | null => {
-        const phone = editData?.avito_phone;
-        if (!phone) return null;
-
-        if (Array.isArray(phone)) {
-            return phone[0]?.replace(/\D/g, '') ?? null;
-        }
-
-        if (typeof phone === 'string') {
-            return phone.replace(/\D/g, '');
-        }
-
-        return null;
-    };
-
-    const editPhone = getEditPhone();
-
-    const isPhoneDisabled = (phone: string, already_exists: boolean) => {
-        if (!already_exists) return false;
-
-        if (type === 'edit') {
-            return phone !== editPhone;
-        }
-
-        return true;
     };
 
     return (
@@ -756,22 +708,16 @@ export function SmsModal({
                                                             key={phone}
                                                             className={`number-row ${disabled ? 'disabled' : ''}`}
                                                         >
-                                                            <input
+                                                            {!already_exists && <input
                                                                 type={'checkbox'}
                                                                 name={type === 'edit' ? 'edit-phone' : undefined}
                                                                 disabled={disabled}
                                                                 checked={selectedTags.includes(phone)}
                                                                 onChange={() => {
                                                                     if (disabled) return;
-
-                                                                    if (type === 'edit') {
-                                                                        setSelectedTags([phone]);
-                                                                        setValue('selectedTags', [phone]);
-                                                                    } else {
                                                                         handleSelectNumber(phone);
-                                                                    }
                                                                 }}
-                                                            />
+                                                            />}
                                                             <span className="number-text">
                                                                 {formatPhoneDisplay(phone)}
                                                             </span>
@@ -798,10 +744,21 @@ export function SmsModal({
                                 <div
                                     key={n}
                                     className="sms-tag"
-                                    onClick={() => handleRemoveTag(n)}
                                     title="Клик — убрать номер"
                                 >
-                                    {formatPhoneDisplay(n)}
+                                    <span className="sms-tag-text">{formatPhoneDisplay(n)}</span>
+                                    <button
+                                        type="button"
+                                        className="sms-tag-remove"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveTag(n);
+                                        }}
+                                        aria-label={`Удалить ${formatPhoneDisplay(n)}`}
+                                        title="Удалить номер"
+                                    >
+                                        ×
+                                    </button>
                                 </div>
                             ))}
                         </div>

@@ -931,7 +931,6 @@ input {
 
 
 .sms-full-input {
-
     flex: 1;
     padding: 10px 12px;
     border: 1px solid #ddd;
@@ -948,6 +947,34 @@ input {
 .sms-tags-row.has-tags {
     margin-top: 10px;
 }
+
+.sms-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sms-tag-remove {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sms-tag:hover .sms-tag-remove {
+    color: #ff3b30; /* можно убрать, если не нужно */
+}
+
 
 .add-phone-btn {
     margin-top: 6px;

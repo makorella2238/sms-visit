@@ -19,13 +19,37 @@ export const useMaxAccounts = () => {
     });
 };
 
-export const useAccountsPhones = (
-    sms_type: number,
-    enabled = false
-) => {
+export const useAccountsPhones = ({
+                                      sms_type,
+                                      type,
+                                      current_phone,
+                                      enabled = false
+                                  }: {
+    sms_type: number;
+    type: 'new' | 'edit';
+    current_phone?: string | null;
+    enabled?: boolean;
+}) => {
     return useQuery({
-        queryKey: ["accounts-phones", sms_type],
-        queryFn: () => smsModal.getAccountsPhones(sms_type),
+        queryKey: [
+            'accounts-phones',
+            type,
+            sms_type,
+            type === 'edit' ? current_phone : null
+        ],
+        queryFn: () => {
+            if (type === 'edit') {
+                if (!current_phone) {
+                    throw new Error('current_phone is required for edit');
+                }
+                return smsModal.getAccountsPhonesForEdit(
+                    sms_type,
+                    current_phone
+                );
+            }
+
+            return smsModal.getAccountsPhones(sms_type);
+        },
         staleTime: 1000 * 60 * 5,
         retry: 1,
         enabled

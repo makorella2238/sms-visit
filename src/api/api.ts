@@ -78,6 +78,25 @@ export const smsModal = {
 
         return JSON.parse(response.data.output);
     },
+    async getAccountsPhonesForEdit(
+        sms_type: number,
+        current_phone: string
+    ): Promise<AccountsPhone[]> {
+        const response = await api.post<AccountsResponse>(
+            `/avito_seller_phone/edit`,
+            {
+                sms_type,
+                current_phone
+            }
+        );
+
+        if (!response.data.success || !response.data.output) {
+            throw new Error("Не удалось загрузить номера для редактирования");
+        }
+
+        return JSON.parse(response.data.output);
+    },
+
 
 
     /** ------------------------- НОВЫЕ API ---------------------------- */

@@ -9,10 +9,6 @@ body {
     color: #475569;
 }
 
-.app {
-    padding: 20px;
-}
-
 /* Верхний блок */
 .header {
     display: flex;

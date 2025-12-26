@@ -6,6 +6,7 @@ import { defaultSelectStyles } from "../../ui/config/selectStyles";
 import Select from 'react-select';
 import {useSmsStatistsEl} from "../../api/queries/statistics/statistics.ts";
 import {MessageCell} from "../../ui/TooltipMessageCell/TooltipMessageCell.tsx";
+import Pagination from "../../ui/statPagination/statPagination.tsx";
 
 interface ApiSmsData {
     id: number;
@@ -486,8 +487,10 @@ export const StatsPage: React.FC = () => {
                         ))}
                         </tbody>
                     </table>
+
                 )}
             </div>
+                    <Pagination/>
         </div>
     );
 };
